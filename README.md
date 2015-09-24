@@ -10,7 +10,7 @@
    
    List/View/Delete blobs
    
-   List blobs in under a virtual directory
+   List blobs under a virtual directory
    
    Create PageBlob of desired size
    
@@ -20,7 +20,9 @@
    
    Download BlockBlob/PageBlob/AppendBlob
    
-2. <TBD>
+   ....
+   
+2. <<TBD>>
 
 *Usage*
 
