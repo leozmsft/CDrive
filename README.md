@@ -1,6 +1,6 @@
 # CDrive
 
-'PullRequests are welcome`
+`PullRequests are welcome`
 
 
 ## Features
@@ -38,10 +38,10 @@
 ```
    Note: if x: is occupied, you can use another drive label.
    
-3. Map Azure Blob/Table/Queue/File services to a directory under the drive. e.g.
+3. Map Azure Blob/Table/Queue/File services to directories under the drive. e.g.
 ```
    cd x:
-   New-Item [myBlob] -type AzureBlob -value https://[yourAccount].blob.core.windows.net/?account=[yourAccount]`&key=[yourAccountKey]`
+   New-Item [myBlob] -type AzureBlob -value https://[yourAccount].blob.core.windows.net/?account=[yourAccount]`&key=[yourAccountKey]
    New-Item [myQueue] -type AzureBlob -value https://[yourAccount].queue.core.windows.net/?account=[yourAccount]`&key=[yourAccountKey]
    New-Item [myFile] -type AzureBlob -value https://[yourAccount].file.core.windows.net/?account=[yourAccount]`&key=[yourAccountKey]
    New-Item [myTable] -type AzureBlob -value https://[yourAccount].table.core.windows.net/?account=[yourAccount]`&key=[yourAccountKey]
