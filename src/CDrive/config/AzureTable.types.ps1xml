@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+  <Type>
+    <Name>CDrive.AzureTableServiceDriveInfo</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>Type</Name>
+        <GetScriptBlock>"Azure Table"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Description</Name>
+        <GetScriptBlock>$_.Endpoint</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>Microsoft.WindowsAzure.Storage.Table</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>TypeTag</Name>
+        <GetScriptBlock>"T"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>ObjectLength</Name>
+        <GetScriptBlock>""</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>Microsoft.WindowsAzure.Storage.Table.DynamicTableEntity</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>ObjectLength</Name>
+        <GetScriptBlock>""</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+</Types>

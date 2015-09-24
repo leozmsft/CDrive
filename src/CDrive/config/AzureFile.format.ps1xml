@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Configuration>
+  <ViewDefinitions>
+    <View>
+      <Name>Microsoft.WindowsAzure.Storage.File.CloudItems</Name>
+      <ViewSelectedBy>
+        <TypeName>Microsoft.WindowsAzure.Storage.File.CloudFile</TypeName>
+        <TypeName>Microsoft.WindowsAzure.Storage.File.CloudFileDirectory</TypeName>
+        <TypeName>Microsoft.WindowsAzure.Storage.File.CloudFileShare</TypeName>
+      </ViewSelectedBy>
+      <GroupBy>
+        <ScriptBlock>$u=$_.Uri.toString(); $u.substring(0, $u.lastIndexOf("/"))</ScriptBlock>
+        <Label>Container</Label>
+      </GroupBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Label>T</Label>
+            <Width>1</Width>
+            <Alignment>Left</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Length</Label>
+            <Width>14</Width>
+            <Alignment>Right</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Name</Label>
+            <Alignment>Left</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Last Modified</Label>
+            <Width>19</Width>
+            <Alignment>Right</Alignment>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <ScriptBlock>$_.TypeTag</ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>$_.ObjectLength</ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>$_.Name</ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>"{0:yyyy-MM-dd HH:mm:ss}" -f $_.Properties.LastModified</ScriptBlock>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+  </ViewDefinitions>
+</Configuration>

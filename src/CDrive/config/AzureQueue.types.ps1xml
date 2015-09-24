@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+  <Type>
+    <Name>CDrive.AzureQueueServiceDriveInfo</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>Type</Name>
+        <GetScriptBlock>"Azure Queue"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Description</Name>
+        <GetScriptBlock>$_.Endpoint</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>Microsoft.WindowsAzure.Storage.Queue.CloudQueue</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>TypeTag</Name>
+        <GetScriptBlock>"Q"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>ObjectLength</Name>
+        <GetScriptBlock>$_.Properties.Length</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>TypeTag</Name>
+        <GetScriptBlock>"M"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Name</Name>
+        <GetScriptBlock>$_.Id</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Content</Name>
+        <GetScriptBlock>$_.AsString</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+</Types>

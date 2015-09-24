@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+  <Type>
+    <Name>CDrive.AzureFileServiceDriveInfo</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>Type</Name>
+        <GetScriptBlock>"Azure File"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Description</Name>
+        <GetScriptBlock>$_.Endpoint</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>Microsoft.WindowsAzure.Storage.File.CloudFile</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>TypeTag</Name>
+        <GetScriptBlock>[string]::Empty</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>ObjectLength</Name>
+        <GetScriptBlock>$_.Properties.Length</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>Microsoft.WindowsAzure.Storage.File.CloudFileShare</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>TypeTag</Name>
+        <GetScriptBlock>"S"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>ObjectLength</Name>
+        <GetScriptBlock>""</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>Microsoft.WindowsAzure.Storage.File.CloudFileDirectory</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>TypeTag</Name>
+        <GetScriptBlock>"D"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>ObjectLength</Name>
+        <GetScriptBlock>[string]::Empty</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+</Types>
