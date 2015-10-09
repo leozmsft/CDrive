@@ -59,6 +59,30 @@ namespace CDrive
                     }
                 }
             }
+            else if (string.Equals(type, "RandomPages", StringComparison.InvariantCultureIgnoreCase))
+            {
+                //fill page blob with random data, each page data is 512Byte, and count is required
+                //e.g. ni PageBlob -type RandomPages -value <count>
+                if (newItemValue != null)
+                {
+                    var size = 0L;
+                    if (long.TryParse(newItemValue.ToString(), out size))
+                    {
+                        this.FillDataInPageBlob(path, size);
+                    }
+                    else
+                    {
+                        this.RootProvider.WriteWarning("Value is required.");
+                    }
+                }
+
+            }
+            else if (string.Equals(type, "ListPages", StringComparison.InvariantCultureIgnoreCase))
+            {
+                //List page ranges in page blob
+                //e.g. ni pageBlob -type ListPages
+                this.ListPageRanges(path);
+            }
             else if (string.Equals(type, "ContainerSAStoken", StringComparison.InvariantCultureIgnoreCase))
             {
                 var parts = PathResolver.SplitPath(path);
@@ -245,6 +269,69 @@ namespace CDrive
             else if (string.Equals(type, "Etag", StringComparison.InvariantCultureIgnoreCase))
             {
                 this.ShowEtag(path);
+            }
+        }
+
+        private void ListPageRanges(string path)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetPageBlobReference(PathResolver.GetSubpath(path));
+                if (!blob.Exists())
+                {
+                    this.RootProvider.WriteWarning("PageBlob " + path + " does not exist.");
+                    return;
+                }
+
+                var count = 0L;
+                foreach(var r in blob.GetPageRanges())
+                {
+                    this.RootProvider.WriteWarning(string.Format("[{3}]\t[{0} - {1}] {2}", r.StartOffset, r.EndOffset, r.EndOffset - r.StartOffset + 1, count++));
+                }
+
+            }
+            else
+            {
+                this.RootProvider.WriteWarning("Please specify the page blob path.");
+            }
+        }
+
+        private void FillDataInPageBlob(string path, long count)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetPageBlobReference(PathResolver.GetSubpath(path));
+                if (!blob.Exists())
+                {
+                    this.RootProvider.WriteWarning("PageBlob " + path + " does not exist.");
+                    return;
+                }
+
+                blob.FetchAttributes();
+                var total = blob.Properties.Length / 512;
+                var data = new byte[512];
+                var random = new Random();
+                random.NextBytes(data);
+
+                this.RootProvider.WriteWarning("Start writing pages...");
+                var tasks = new Task[count];
+
+                for (var i = 0; i < count; ++i) {
+                    var p = (long)(random.NextDouble() * total);
+
+                    var task = blob.WritePagesAsync(new MemoryStream(data), p * 512, null);
+                    tasks[i] = task;
+                }
+
+                this.RootProvider.WriteWarning("Waiting writing pages...");
+                Task.WaitAll(tasks);
+                this.RootProvider.WriteWarning("Completed writing pages...");
+            }
+            else
+            {
+                this.RootProvider.WriteWarning("Please specify the page blob path.");
             }
         }
 
