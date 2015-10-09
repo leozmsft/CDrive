@@ -25,7 +25,10 @@
  * Create/List/Remove queues
  * List/View/Create/Remove queue messages
 * Support Azure Table Service
- * ...
+ * Create/List/Remove tables
+ * Insert/InsertOrReplace/InsertOrMerge/Replace/Merge table entities
+ * List/View/Remove entities
+ * Support query conditions
 * Support Azure File Service
  * Create/List/Remove shares
  * Create/Delete directories
