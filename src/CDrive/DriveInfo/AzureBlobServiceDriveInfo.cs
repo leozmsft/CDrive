@@ -284,12 +284,43 @@ namespace CDrive
                     return;
                 }
 
-                var count = 0L;
-                foreach(var r in blob.GetPageRanges())
-                {
-                    this.RootProvider.WriteWarning(string.Format("[{3}]\t[{0} - {1}] {2}", r.StartOffset, r.EndOffset, r.EndOffset - r.StartOffset + 1, count++));
-                }
+                blob.FetchAttributes();
+                var totalLength = blob.Properties.Length;
 
+                var count = 0L;
+                var offset = 0L;
+                var length = 4 * 1024 * 1024L; //4MB
+                while (true)
+                {
+                    PageRange page = null;
+                    var round = 0L;
+
+                    length = (offset + length > totalLength) ? (totalLength - offset) : length;
+                    foreach (var r in blob.GetPageRanges(offset, length)) {
+                        page = r;
+                        round++;
+                        this.RootProvider.WriteWarning(string.Format("[{3}]\t[{0} - {1}] {2}", r.StartOffset, r.EndOffset, r.EndOffset - r.StartOffset + 1, count++));
+                    }
+
+                    if (offset + length >= totalLength)
+                    {
+                        //reach the end
+                        break;
+                    }
+
+                    //1. move offset
+                    offset += length;
+
+                    //2. calculate next length
+                    if (round < 200)
+                    {
+                        length *= 2;
+                    }
+                    else if (round > 500)
+                    {
+                        length /= 2;
+                    }
+                }
             }
             else
             {
