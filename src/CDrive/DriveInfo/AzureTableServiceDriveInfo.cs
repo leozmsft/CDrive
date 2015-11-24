@@ -469,7 +469,7 @@ namespace CDrive
             }
         }
 
-        private void CreateEntity<T>(AzureTablePathResolveResult r, T obj, Func<ITableEntity, TableOperation> func)
+        private void CreateEntity(AzureTablePathResolveResult r, object obj, Func<ITableEntity, TableOperation> func)
         {
             var e = new DynamicTableEntity();
             if (obj is Hashtable)
@@ -492,9 +492,9 @@ namespace CDrive
                     }
                 }
             }
-            else if (obj is DynamicTableEntity)
+            else
             {
-                e = obj as DynamicTableEntity;
+                e = ((PSObject) obj).BaseObject as DynamicTableEntity;
             }
 
             var o = func(e);
