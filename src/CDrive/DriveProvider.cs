@@ -159,17 +159,7 @@ namespace CDrive
 
         protected override void CopyItem(string path, string copyPath, bool recurse)
         {
-            var sourceDrive = PathResolver.FindDrive(path);
-            var targetDrive = PathResolver.FindDrive(copyPath);
-
-            if (sourceDrive is AzureTableServiceDriveInfo && targetDrive is AzureTableServiceDriveInfo)
-            {
-                var sd = sourceDrive as AzureTableServiceDriveInfo;
-                var td = targetDrive as AzureTableServiceDriveInfo;
-                sd.CopyTo(PathResolver.GetSubpath(path), td, PathResolver.GetSubpath(copyPath));
-                return;
-            }
-            Copy(path, copyPath, recurse, false);
+            CopyItemInternal(path, copyPath, recurse);
         }
 
         private void Copy(string path, string copyPath, bool recurse, bool deleteSource = false)
@@ -476,9 +466,24 @@ namespace CDrive
         }
         protected override void MoveItem(string path, string destination)
         {
-            CopyItem(path, destination, true);
-            WriteWarning("Files/Directories have been copied.");
+            CopyItemInternal(path, destination, true, true);
         }
+
+        protected void CopyItemInternal(string path, string destination, bool recurse, bool deleteOriginal = false)
+        {
+            var sourceDrive = PathResolver.FindDrive(path);
+            var targetDrive = PathResolver.FindDrive(destination);
+
+            if (sourceDrive is AzureTableServiceDriveInfo && targetDrive is AzureTableServiceDriveInfo)
+            {
+                var sd = sourceDrive as AzureTableServiceDriveInfo;
+                var td = targetDrive as AzureTableServiceDriveInfo;
+                sd.CopyTo(PathResolver.GetSubpath(path), td, PathResolver.GetSubpath(destination), deleteOriginal);
+                return;
+            }
+            Copy(path, destination, recurse, false);
+        }
+
         protected override object MoveItemDynamicParameters(string path, string destination)
         {
             return null;

@@ -794,7 +794,7 @@ namespace CDrive
             }
         }
 
-        internal void CopyTo(string path, AzureTableServiceDriveInfo target, string copyPath)
+        internal void CopyTo(string path, AzureTableServiceDriveInfo target, string copyPath, bool deleteOriginal = false)
         {
             var parts = PathResolver.SplitPath(path);
             if (parts.Count == 0)
@@ -810,13 +810,23 @@ namespace CDrive
                 return;
             }
 
-
             var items = this.ListItems(path);
             foreach (ITableEntity i in items)
             {
                 var o = TableOperation.InsertOrReplace(i);
                 targetRef.Table.Execute(o);
                 this.RootProvider.WriteWarning(string.Format("Entity {0} # {1} is inserted", i.PartitionKey, i.RowKey));
+            }
+
+            if (deleteOriginal)
+            {
+                var sourceRef = AzureTablePathResolver.ResolvePath(this.Client, path);
+                foreach (ITableEntity i in items)
+                {
+                    var o = TableOperation.Delete(i);
+                    sourceRef.Table.Execute(o);
+                    this.RootProvider.WriteWarning(string.Format("Source Entity {0} # {1} is deleted", i.PartitionKey, i.RowKey));
+                }
             }
         }
     }
