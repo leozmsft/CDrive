@@ -270,6 +270,25 @@ namespace CDrive
             {
                 this.ShowEtag(path);
             }
+            else
+            {
+                this.RootProvider.WriteWarning("No operation type is specified by <-type>.");
+                this.RootProvider.WriteWarning("Supported operation type: ");
+                this.RootProvider.WriteWarning("\tDirectory:            Create directory <-path>");
+                this.RootProvider.WriteWarning("\tPageBlob:             Create page blob <-path> with size <-value>");
+                this.RootProvider.WriteWarning("\tRandomPages:          Fill page blob <-path> with size <-value> using random data");
+                this.RootProvider.WriteWarning("\tListPages:            List page ranges in page blob <-path>");
+                this.RootProvider.WriteWarning("\tBlockBlob:            Create block blob <-path> with contents <-value>");
+                this.RootProvider.WriteWarning("\tAppendBlob:           Create append blob <-path> with contents <-value>");
+                this.RootProvider.WriteWarning("\tContainerSAStoken:    Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+                this.RootProvider.WriteWarning("\tBlobSAStoken:         Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+                this.RootProvider.WriteWarning("\tPolicy:               Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+                this.RootProvider.WriteWarning("\tPermission:           Supported <-value>: PublicContainer, PrivateContainer");
+                this.RootProvider.WriteWarning("\tAsyncCopy:            AsyncCopy blob from url <-value> to <-path>");
+                this.RootProvider.WriteWarning("\tCopyStatus:           Show copy status of blob <-path>");
+                this.RootProvider.WriteWarning("\tCancelCopy:           Specify the destBlob in <-path> and the copy ID in <-value>.");
+                this.RootProvider.WriteWarning("\tEtag:                 Show the Etag of the blob <-path> ");
+            }
         }
 
         private void ListPageRanges(string path)
