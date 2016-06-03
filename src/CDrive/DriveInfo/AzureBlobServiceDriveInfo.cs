@@ -931,19 +931,18 @@ namespace CDrive
         public override Stream CopyFrom(string path)
         {
             var r = AzureBlobPathResolver.ResolvePath(this.Client, path, skipCheckExistence: false);
-            MemoryStream target = new MemoryStream();
-            r.Blob.DownloadToStream(target);
-            return target;
+            return r.Blob.OpenRead();
         }
 
-        public override void CopyTo(string path, string name, Stream stream)
+        public override Stream CopyTo(string path, string name)
         {
             var r = AzureBlobPathResolver.ResolvePath(this.Client, path, skipCheckExistence: false);
             if (r.PathType == PathType.AzureBlobDirectory)
             {
                 var blob = r.Directory.GetBlockBlobReference(name);
-                blob.UploadFromStream(stream);
+                return blob.OpenWrite();
             }
+            throw new Exception(path + " is not a directory");
         }
 
         public override IList<string> GetChildNamesList(string path, PathType type = PathType.Any)

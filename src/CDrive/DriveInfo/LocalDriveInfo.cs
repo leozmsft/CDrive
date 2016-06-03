@@ -139,12 +139,9 @@ namespace CDrive
             return new FileStream(convertToLocalPath(path), FileMode.Open);
         }
 
-        public override void CopyTo(string path, string name, Stream stream)
+        public override Stream CopyTo(string path, string name)
         {
-            using (var fs = new FileStream(Path.Combine(convertToLocalPath(path), name), FileMode.CreateNew))
-            {
-                stream.CopyTo(fs);
-            }
+            return new FileStream(Path.Combine(convertToLocalPath(path), name), FileMode.CreateNew);
         }
 
         public override IList<string> GetChildNamesList(string path, PathType type = PathType.Any)

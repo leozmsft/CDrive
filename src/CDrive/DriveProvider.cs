@@ -404,17 +404,25 @@ namespace CDrive
         {
             var sourceDrive = PathResolver.FindDrive(path);
             var targetDrive = PathResolver.FindDrive(destination);
-            using (var buf = sourceDrive.CopyFrom(PathResolver.GetSubpath(path)))
+            var sourcePath = PathResolver.GetSubpath(path);
+            string targetDir, targetFile;
+            if (targetDrive.IsItemContainer(PathResolver.GetSubpath(destination)) && !exactDest)
             {
-                buf.Seek(0, SeekOrigin.Begin);
-                if (targetDrive.IsItemContainer(PathResolver.GetSubpath(destination)) && !exactDest)
-                {
-                    targetDrive.CopyTo(PathResolver.GetSubpath(destination), PathResolver.SplitPath(path).Last(), buf);
-                }
-                else
-                {
-                    targetDrive.CopyTo(PathResolver.GetSubpathDirectory(destination), PathResolver.SplitPath(destination).Last(), buf);
-                }
+                targetDir = PathResolver.GetSubpath(destination);
+                targetFile = PathResolver.SplitPath(path).Last();
+            }
+            else
+            {
+                targetDir = PathResolver.GetSubpathDirectory(destination);
+                targetFile = PathResolver.SplitPath(destination).Last();
+            }
+            using (var sourceStream = sourceDrive.CopyFrom(sourcePath))
+            using (var targetStream = targetDrive.CopyTo(targetDir, targetFile))
+            {
+                sourceStream.Seek(0, SeekOrigin.Begin);
+                targetStream.Seek(0, SeekOrigin.Begin);
+                sourceStream.CopyTo(targetStream);
+
             }
         }
 

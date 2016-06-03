@@ -628,7 +628,7 @@ namespace CDrive
             throw new NotImplementedException();
         }
 
-        public override void CopyTo(string path, string name, Stream stream)
+        public override Stream CopyTo(string path, string name)
         {
             throw new NotImplementedException();
         }

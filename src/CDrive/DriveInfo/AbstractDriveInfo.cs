@@ -32,7 +32,7 @@ namespace CDrive
 
         public abstract Stream CopyFrom(string path);
 
-        public abstract void CopyTo(string path, string name, Stream stream);
+        public abstract Stream CopyTo(string dir, string name);
 
         public abstract IList<string> GetChildNamesList(string path, PathType type);
 
