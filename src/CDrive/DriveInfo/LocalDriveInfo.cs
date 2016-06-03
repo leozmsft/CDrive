@@ -13,7 +13,8 @@ namespace CDrive
 {
     public class LocalDriveInfo : AbstractDriveInfo
     {
-        internal string Endpoint;
+        public string Endpoint { get; set; }
+
         public LocalDriveInfo(string path, string name)
         {
             this.Endpoint = path;
@@ -27,22 +28,28 @@ namespace CDrive
         public override void GetChildItems(string path, bool recurse)
         {
             var localPath = convertToLocalPath(path);
-            if (Directory.Exists(localPath))
+            try
             {
-                var info = new DirectoryInfo(localPath);
-                foreach (var c in info.EnumerateDirectories())
+                if (Directory.Exists(localPath))
                 {
-                    this.RootProvider.WriteItemObject(c.Name, path, true);
+                    var info = new DirectoryInfo(localPath);
+                    foreach (var c in info.EnumerateDirectories())
+                    {
+                        this.RootProvider.WriteItemObject(c, path, true);
+                    }
+                    foreach (var c in info.EnumerateFiles())
+                    {
+                        this.RootProvider.WriteItemObject(c, path, false);
+                    }
                 }
-                foreach (var c in info.EnumerateFiles())
+                if (File.Exists(localPath))
                 {
-                    this.RootProvider.WriteItemObject(c.Name, path, false);
+                    var info = new FileInfo(localPath);
+                    this.RootProvider.WriteItemObject(info, path, false);
                 }
             }
-            if (File.Exists(localPath))
-            {
-                this.RootProvider.WriteItemObject(Path.GetFileName(localPath), path, false);
-            }
+            catch { }
+
             if (recurse)
             {
                 foreach (var c in Directory.GetDirectories(localPath))
@@ -54,7 +61,23 @@ namespace CDrive
 
         public override void GetChildNames(string path, ReturnContainers returnContainers)
         {
-            GetChildItems(path, false);
+            var localPath = convertToLocalPath(path);
+            try
+            {
+                if (Directory.Exists(localPath))
+                {
+                    var info = new DirectoryInfo(localPath);
+                    foreach (var c in info.EnumerateDirectories())
+                    {
+                        this.RootProvider.WriteItemObject(c.Name, path, true);
+                    }
+                    foreach (var c in info.EnumerateFiles())
+                    {
+                        this.RootProvider.WriteItemObject(c.Name, path, false);
+                    }
+                }
+            }
+            catch { }
         }
 
         public override IContentReader GetContentReader(string path)

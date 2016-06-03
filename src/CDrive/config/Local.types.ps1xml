@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+  <Type>
+    <Name>CDrive.LocalDriveInfo</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>Type</Name>
+        <GetScriptBlock>"Local Dir"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Description</Name>
+        <GetScriptBlock>$_.Endpoint</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>System.IO.DirectoryInfo</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>IsDirectory</Name>
+        <GetScriptBlock>$true</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>DisplayName</Name>
+        <GetScriptBlock>_.Name</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>System.IO.FileInfo</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>IsDirectory</Name>
+        <GetScriptBlock>$false</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>DisplayName</Name>
+        <GetScriptBlock>_.Name</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+</Types>

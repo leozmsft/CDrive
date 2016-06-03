@@ -315,11 +315,6 @@ namespace CDrive
         }
         protected override bool IsItemContainer(string path)
         {
-            if (PathResolver.IsLocalPath(path))
-            {
-                return true;
-            }
-
             var parts = PathResolver.SplitPath(path);
             if (parts.Count == 0)
             {
@@ -420,9 +415,7 @@ namespace CDrive
             using (var targetStream = targetDrive.CopyTo(targetDir, targetFile))
             {
                 sourceStream.Seek(0, SeekOrigin.Begin);
-                targetStream.Seek(0, SeekOrigin.Begin);
                 sourceStream.CopyTo(targetStream);
-
             }
         }
 

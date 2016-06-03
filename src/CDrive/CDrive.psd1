@@ -31,7 +31,8 @@ TypesToProcess = @(
 	'config\AzureFile.types.ps1xml', 
 	'config\AzureTable.types.ps1xml', 
 	'config\AzureQueue.types.ps1xml', 
-	'config\AzureBlob.types.ps1xml')
+	'config\AzureBlob.types.ps1xml',
+	'config\Local.types.ps1xml')
 
 # Functions to export from this module
 FunctionsToExport = '*'
