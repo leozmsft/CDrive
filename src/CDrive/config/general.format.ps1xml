@@ -8,6 +8,7 @@
         <TypeName>CDrive.AzureFileServiceDriveInfo</TypeName>
         <TypeName>CDrive.AzureTableServiceDriveInfo</TypeName>
         <TypeName>CDrive.AzureQueueServiceDriveInfo</TypeName>
+        <TypeName>CDrive.LocalDriveInfo</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>

@@ -829,6 +829,21 @@ namespace CDrive
                 }
             }
         }
+
+        public override Stream CopyFrom(string path)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void CopyTo(string path, string name, Stream stream)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IList<string> GetChildNamesList(string path, PathType type = PathType.Any)
+        {
+            throw new NotImplementedException();
+        }
     }
 
 

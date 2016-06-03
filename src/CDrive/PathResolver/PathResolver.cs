@@ -63,6 +63,17 @@ namespace CDrive
             return string.Join(PathResolver.DirSeparator, l.ToArray());
         }
 
+        public static string GetSubpathDirectory(string path)
+        {
+            var l = SplitPath(path);
+            if (l.Count > 0)
+            {
+                l.RemoveAt(0);
+            }
+            l.RemoveAt(l.Count() - 1);
+            return string.Join(PathResolver.DirSeparator, l.ToArray());
+        }
+
         public static string GetParentPath(string path)
         {
             var l = SplitPath(path);

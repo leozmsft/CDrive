@@ -804,135 +804,6 @@ namespace CDrive
             }
         }
 
-        internal void Download(string path, string destination)
-        {
-            var r = AzureBlobPathResolver.ResolvePath(this.Client, path, skipCheckExistence: false);
-            var targetIsDir = Directory.Exists(destination);
-
-            switch (r.PathType)
-            {
-                case PathType.AzureBlobBlock:
-                    if (targetIsDir)
-                    {
-                        destination = PathResolver.Combine(destination, r.Parts.Last());
-                    }
-
-                    r.Blob.DownloadToFile(destination, FileMode.CreateNew);
-                    break;
-                case PathType.AzureBlobDirectory:
-                    if (r.Directory == r.RootDirectory)
-                    {
-                        //at container level
-                        this.DownloadContainer(r.Container, destination);
-                    }
-                    else
-                    {
-                        DownloadDirectory(r.Directory, destination);
-                    }
-                    break;
-                case PathType.AzureBlobRoot:
-                    var shares = this.Client.ListContainers();
-                    foreach (var share in shares)
-                    {
-                        this.DownloadContainer(share, destination);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void DownloadContainer(CloudBlobContainer container, string destination)
-        {
-            destination = PathResolver.Combine(destination, container.Name);
-            Directory.CreateDirectory(destination);
-
-            var dir = container.GetDirectoryReference("");
-            ListAndHandle(dir,
-                flatBlobListing: false,
-                blobAction: (b) => b.DownloadToFile(PathResolver.Combine(destination, b.Name), FileMode.CreateNew),
-                dirAction: (d) => DownloadDirectory(d, destination));
-        }
-
-        internal void DownloadDirectory(CloudBlobDirectory dir, string destination)
-        {
-            destination = Path.Combine(destination, dir.Prefix);
-            Directory.CreateDirectory(destination);
-
-            ListAndHandle(dir,
-                flatBlobListing: false,
-                blobAction: (b) => b.DownloadToFile(PathResolver.Combine(destination, b.Name), FileMode.CreateNew),
-                dirAction: (d) => DownloadDirectory(d, destination));
-        }
-
-        internal void Upload(string localPath, string targePath)
-        {
-            var r = AzureBlobPathResolver.ResolvePath(this.Client, targePath, skipCheckExistence: false);
-            var localIsDirectory = Directory.Exists(localPath);
-            var local = PathResolver.SplitPath(localPath);
-            switch (r.PathType)
-            {
-                case PathType.AzureBlobRoot:
-                    if (localIsDirectory)
-                    {
-                        var container = CreateContainerIfNotExists(local.Last());
-                        var dir = container.GetDirectoryReference("");
-                        foreach (var f in Directory.GetFiles(localPath))
-                        {
-                            UploadFile(f, dir);
-                        }
-
-                        foreach (var d in Directory.GetDirectories(localPath))
-                        {
-                            UploadDirectory(d, dir);
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception("Cannot upload file as file share.");
-                    }
-                    break;
-                case PathType.AzureBlobDirectory:
-                    if (localIsDirectory)
-                    {
-                        UploadDirectory(localPath, r.Directory);
-                    }
-                    else
-                    {
-                        UploadFile(localPath, r.Directory);
-                    }
-                    break;
-                case PathType.AzureBlobBlock:
-                default:
-                    break;
-            }
-
-        }
-
-        private void UploadDirectory(string localPath, CloudBlobDirectory dir)
-        {
-            var localDirName = Path.GetFileName(localPath);
-            var subdir = dir.GetDirectoryReference(localDirName);
-
-            foreach (var f in Directory.GetFiles(localPath))
-            {
-                UploadFile(f, subdir);
-            }
-
-            foreach (var d in Directory.GetDirectories(localPath))
-            {
-                UploadDirectory(d, subdir);
-            }
-        }
-
-        private void UploadFile(string localFile, CloudBlobDirectory dir)
-        {
-            var file = Path.GetFileName(localFile);
-            var f = dir.GetBlockBlobReference(file);
-            var condition = new AccessCondition();
-            f.UploadFromFile(localFile, FileMode.CreateNew);
-        }
-
         public override bool HasChildItems(string path)
         {
             var r = AzureBlobPathResolver.ResolvePath(this.Client, path, hint: PathType.AzureBlobDirectory, skipCheckExistence: false);
@@ -1056,33 +927,40 @@ namespace CDrive
             }
         }
 
-        #region copy
-        public override void UploadFromLocal(string localPath, string serverPath)
-        {
-            var fi = new FileInfo(localPath);
-            if (!fi.Exists)
-            {
-                return;
-            }
 
-            var r = AzureBlobPathResolver.ResolvePath(this.Client, serverPath, skipCheckExistence: false);
+        public override Stream CopyFrom(string path)
+        {
+            var r = AzureBlobPathResolver.ResolvePath(this.Client, path, skipCheckExistence: false);
+            MemoryStream target = new MemoryStream();
+            r.Blob.DownloadToStream(target);
+            return target;
+        }
+
+        public override void CopyTo(string path, string name, Stream stream)
+        {
+            var r = AzureBlobPathResolver.ResolvePath(this.Client, path, skipCheckExistence: false);
             if (r.PathType == PathType.AzureBlobDirectory)
             {
-                var blob = r.Directory.GetBlockBlobReference(fi.Name);
-                blob.UploadFromFile(localPath, FileMode.Open);    
+                var blob = r.Directory.GetBlockBlobReference(name);
+                blob.UploadFromStream(stream);
             }
         }
 
-        public override void DownloadToLocal(string localPath, string serverPath)
+        public override IList<string> GetChildNamesList(string path, PathType type = PathType.Any)
         {
-            var r = AzureBlobPathResolver.ResolvePath(this.Client, serverPath, skipCheckExistence: false);
-            if (r.PathType == PathType.AzureBlobPage || r.PathType == PathType.AzureBlobBlock)
+            var childs = new List<string>();
+            var items = ListItems(path);
+
+            if (type == PathType.Container || type == PathType.Any)
             {
-                r.Blob.DownloadToFile(Path.Combine(localPath + "\\", r.Blob.Name.Split('/').Last()), FileMode.CreateNew);
+                HandleItems(items, x => { } , x => childs.Add(x.Prefix.Trim('/').Split('/').Last()), x => childs.Add(x.Name));
             }
+            if (type == PathType.Item || type == PathType.Any)
+            {
+                HandleItems(items, x => childs.Add(x.Name.Trim('/').Split('/').Last()), x => { }, x => { });
+            }
+            return childs;
         }
-        
-        #endregion
     }
 
     class AzureBlobReader : IContentReader

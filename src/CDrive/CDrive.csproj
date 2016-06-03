@@ -80,6 +80,7 @@
     <Compile Include="DriveInfo\AzureQueueServiceDriveInfo.cs" />
     <Compile Include="DriveInfo\AzureTableServiceDriveInfo.cs" />
     <Compile Include="DriveInfo\AzureFileServiceDriveInfo.cs" />
+    <Compile Include="DriveInfo\LocalDriveInfo.cs" />
     <Compile Include="DriveInfo\DriveFactory.cs" />
     <Compile Include="DriveProvider.cs" />
     <Compile Include="PathResolver\AzureBlobPathResolver.cs" />
