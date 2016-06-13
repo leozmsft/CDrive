@@ -14,6 +14,19 @@
     </Members>
   </Type>
   <Type>
+    <Name>CDrive.AzureBlobServiceDriveInfo2</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>Type</Name>
+        <GetScriptBlock>"Azure Blob"</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Description</Name>
+        <GetScriptBlock>$_.Endpoint</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
     <Name>Microsoft.WindowsAzure.Storage.Blob.CloudBlobContainer</Name>
     <Members>
       <ScriptProperty>
@@ -84,11 +97,11 @@
       </ScriptProperty>
       <ScriptProperty>
         <Name>URL</Name>
-        <GetScriptBlock>$u=$_.Uri.toString(); $u.substring(0, $u.lastIndexOf("/"))</GetScriptBlock>
+        <GetScriptBlock>$_.Container.Uri.ToString()</GetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>
         <Name>DisplayName</Name>
-        <GetScriptBlock>$parts=$_.Name.trim("/").split("/");$parts[$parts.length-1]</GetScriptBlock>
+        <GetScriptBlock>$_.Uri.ToString().substring($_.Container.Uri.tostring().length + 1)</GetScriptBlock>
       </ScriptProperty>
     </Members>
   </Type>
@@ -113,11 +126,11 @@
       </ScriptProperty>
       <ScriptProperty>
         <Name>URL</Name>
-        <GetScriptBlock>$u=$_.Uri.toString(); $u.substring(0, $u.lastIndexOf("/"))</GetScriptBlock>
+        <GetScriptBlock>$_.Container.Uri.ToString()</GetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>
         <Name>DisplayName</Name>
-        <GetScriptBlock>$parts=$_.Name.trim("/").split("/");$parts[$parts.length-1]</GetScriptBlock>
+        <GetScriptBlock>$_.Uri.ToString().substring($_.Container.Uri.tostring().length + 1)</GetScriptBlock>
       </ScriptProperty>
     </Members>
   </Type>
@@ -142,11 +155,11 @@
       </ScriptProperty>
       <ScriptProperty>
         <Name>URL</Name>
-        <GetScriptBlock>$u=$_.Uri.toString(); $u.substring(0, $u.lastIndexOf("/"))</GetScriptBlock>
+        <GetScriptBlock>$_.Container.Uri.ToString()</GetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>
         <Name>DisplayName</Name>
-        <GetScriptBlock>$parts=$_.Name.trim("/").split("/");$parts[$parts.length-1]</GetScriptBlock>
+        <GetScriptBlock>$_.Uri.ToString().substring($_.Container.Uri.tostring().length + 1)</GetScriptBlock>
       </ScriptProperty>
     </Members>
   </Type>

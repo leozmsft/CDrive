@@ -75,7 +75,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BlobQuery.cs" />
     <Compile Include="DriveInfo\AbstractDriveInfo.cs" />
+    <Compile Include="DriveInfo\AzureBlobServiceDriveInfo2.cs" />
     <Compile Include="DriveInfo\AzureBlobServiceDriveInfo.cs" />
     <Compile Include="DriveInfo\AzureQueueServiceDriveInfo.cs" />
     <Compile Include="DriveInfo\AzureTableServiceDriveInfo.cs" />
@@ -83,7 +85,9 @@
     <Compile Include="DriveInfo\LocalDriveInfo.cs" />
     <Compile Include="DriveInfo\DriveFactory.cs" />
     <Compile Include="DriveProvider.cs" />
+    <Compile Include="PathResolver\AzureBlobPathResolver2.cs" />
     <Compile Include="PathResolver\AzureBlobPathResolver.cs" />
+    <Compile Include="PathResolver\AzureBlobPathResolveResult2.cs" />
     <Compile Include="PathResolver\AzureBlobPathResolveResult.cs" />
     <Compile Include="PathResolver\AzureQueuePathResolver.cs" />
     <Compile Include="PathResolver\AzureQueuePathResolveResult.cs" />
@@ -131,7 +135,9 @@
     <None Include="config\general.format.ps1xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="config\Local.types.ps1xml" />
+    <None Include="config\Local.types.ps1xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

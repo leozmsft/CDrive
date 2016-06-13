@@ -20,6 +20,9 @@ namespace CDrive
                 case "azureblob":
                     var b = new AzureBlobServiceDriveInfo(value as string, name);
                     return b;
+                case "azureblob2":
+                    var b2 = new AzureBlobServiceDriveInfo2(value as string, name);
+                    return b2;
                 case "azuretable":
                     var t = new AzureTableServiceDriveInfo(value as string, name);
                     return t;

@@ -5,6 +5,7 @@
       <Name>MountedLabel</Name>
       <ViewSelectedBy>
         <TypeName>CDrive.AzureBlobServiceDriveInfo</TypeName>
+        <TypeName>CDrive.AzureBlobServiceDriveInfo2</TypeName>
         <TypeName>CDrive.AzureFileServiceDriveInfo</TypeName>
         <TypeName>CDrive.AzureTableServiceDriveInfo</TypeName>
         <TypeName>CDrive.AzureQueueServiceDriveInfo</TypeName>

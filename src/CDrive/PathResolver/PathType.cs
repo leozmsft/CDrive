@@ -2,11 +2,15 @@
 {
     public enum PathType
     {
+        Root,
+
         AzureFileRoot,
         AzureFileDirectory,
         AzureFile,
 
         AzureBlobRoot,
+        AzureBlobQuery,
+
         AzureBlobDirectory,
         AzureBlobBlock,
         AzureBlobPage,
