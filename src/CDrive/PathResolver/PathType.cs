@@ -18,6 +18,13 @@
         AzureQueueRoot,
         AzureQueueQuery,
 
+        LocalDirectory,
+        LocalFile,
+
+        Container,
+        Item,
+        Any,
+
         Invalid,
         Unknown
     }

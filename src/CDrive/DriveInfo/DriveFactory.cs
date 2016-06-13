@@ -25,7 +25,10 @@ namespace CDrive
                     return t;
                 case "azurequeue":
                     var q = new AzureQueueServiceDriveInfo(value as string, name);
-                    return q; 
+                    return q;
+                case "local":
+                    var l = new LocalDriveInfo(value as string, name);
+                    return l;
                 default:
                     return null;
                     

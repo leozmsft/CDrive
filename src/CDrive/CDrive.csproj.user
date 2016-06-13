@@ -2,8 +2,9 @@
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartAction>Program</StartAction>
-    <StartProgram>C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</StartProgram>
-    <StartArguments>-File D:\versioned\Cdrive\src\CDrive\bin\Debug\start.ps1 -noexit -ExecutionPolicy Unrestricted</StartArguments>
-    <StartWorkingDirectory>D:\versioned\Cdrive\src\CDrive\bin\Debug\</StartWorkingDirectory>
+    <StartProgram>c:\windows\system32\WindowsPowerShell\v1.0\powershell.exe</StartProgram>
+    <StartArguments>
+    </StartArguments>
+    <StartWorkingDirectory>C:\CDrive\src\CDrive\bin\Debug</StartWorkingDirectory>
   </PropertyGroup>
 </Project>

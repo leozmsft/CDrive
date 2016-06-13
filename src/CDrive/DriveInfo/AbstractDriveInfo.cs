@@ -5,6 +5,7 @@ using System.Management.Automation;
 using System.Management.Automation.Provider;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace CDrive
 {
@@ -29,6 +30,12 @@ namespace CDrive
 
         public abstract void SetProperty(string path, PSObject propertyValue);
 
+        public abstract Stream CopyFrom(string path);
+
+        public abstract Stream CopyTo(string dir, string name);
+
+        public abstract IList<string> GetChildNamesList(string path, PathType type);
+
         protected static Dictionary<string, string> ParseValues(string str)
         {
             var dict = new Dictionary<string, string>();
@@ -42,16 +49,5 @@ namespace CDrive
 
             return dict;
         }
-
-        public virtual void UploadFromLocal(string localPath, string serverPath)
-        {
-            throw new NotImplementedException();
-        }
-
-        public virtual void DownloadToLocal(string localPath, string serverPath)
-        {
-            throw new NotImplementedException();
-        }
-
     }
 }

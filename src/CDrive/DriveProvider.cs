@@ -6,6 +6,7 @@ using System.Management.Automation.Provider;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace CDrive
 {
@@ -162,117 +163,6 @@ namespace CDrive
             CopyItemInternal(path, copyPath, recurse);
         }
 
-        private void Copy(string path, string copyPath, bool recurse, bool deleteSource = false)
-        {
-            var sourceIsLocal = PathResolver.IsLocalPath(path);
-            var targetIsLocal = PathResolver.IsLocalPath(copyPath);
-
-            AbstractDriveInfo source = null;
-            AbstractDriveInfo target = null;
-
-            var sourcePath = string.Empty;
-            var targetPath = string.Empty;
-
-            if (sourceIsLocal)
-            {
-                if (!targetIsLocal)
-                {
-                    var parts = PathResolver.SplitPath(copyPath);
-                    if (parts.Count == 0)
-                    {
-                        return;
-                    }
-
-                    //if the provider is not mounted, then return
-                    var drive = GetDrive(parts[0]);
-                    if (drive == null)
-                    {
-                        return;
-                    }
-
-                    drive.UploadFromLocal(PathResolver.ConvertToRealLocalPath(path), PathResolver.GetSubpath(copyPath));
-                    return;
-                }
-            }
-            else
-            {
-                var parts = PathResolver.SplitPath(path);
-                if (parts.Count == 0)
-                {
-                    return;
-                }
-
-                //if the provider is not mounted, then return
-                var drive = GetDrive(parts[0]);
-                if (drive == null)
-                {
-                    return;
-                }
-
-                source = drive;
-                sourcePath = PathResolver.GetSubpath(path);
-            }
-
-            if (targetIsLocal)
-            {
-                if (!sourceIsLocal)
-                {
-                    var parts = PathResolver.SplitPath(path);
-                    if (parts.Count == 0)
-                    {
-                        return;
-                    }
-
-                    //if the provider is not mounted, then return
-                    var drive = GetDrive(parts[0]);
-                    if (drive == null)
-                    {
-                        return;
-                    }
-
-                    drive.DownloadToLocal(PathResolver.ConvertToRealLocalPath(copyPath), PathResolver.GetSubpath(path));
-                    return;
-                }
-            }
-            else
-            {
-                var parts = PathResolver.SplitPath(copyPath);
-                if (parts.Count == 0)
-                {
-                    return;
-                }
-
-                //if the provider is not mounted, then return
-                var drive = GetDrive(parts[0]);
-                if (drive == null)
-                {
-                    return;
-                }
-
-                target = drive;
-                targetPath = PathResolver.GetSubpath(copyPath);
-            }
-
-            if (sourceIsLocal && targetIsLocal)
-            {
-                throw new NotSupportedException();
-            }
-
-            //check if rename is supported and meets the request
-            //if (deleteSource && source == target && source.IsRenameSupported())
-            //{
-            //    throw new NotImplementedException();
-            //}
-
-            ////check if they are copying to themselves
-            //if (source == target && PathResolver.GetParentPath(path) == copyPath)
-            //{
-            //    this.WriteError(new ErrorRecord(new Exception("Cannot copy files to override themselves."), "CopyToSelf", ErrorCategory.InvalidArgument, null));
-            //    return;
-            //}
-
-        }
-
         protected override void RemoveItem(string path, bool recurse)
         {
             var parts = PathResolver.SplitPath(path);
@@ -425,11 +315,6 @@ namespace CDrive
         }
         protected override bool IsItemContainer(string path)
         {
-            if (PathResolver.IsLocalPath(path))
-            {
-                return true;
-            }
-
             var parts = PathResolver.SplitPath(path);
             if (parts.Count == 0)
             {
@@ -469,7 +354,7 @@ namespace CDrive
             CopyItemInternal(path, destination, true, true);
         }
 
-        protected void CopyItemInternal(string path, string destination, bool recurse, bool deleteOriginal = false)
+        protected void CopyItemInternal(string path, string destination, bool recurse, bool deleteOriginal = false, bool exactDest = false)
         {
             var sourceDrive = PathResolver.FindDrive(path);
             var targetDrive = PathResolver.FindDrive(destination);
@@ -481,7 +366,57 @@ namespace CDrive
                 sd.CopyTo(PathResolver.GetSubpath(path), td, PathResolver.GetSubpath(destination), deleteOriginal);
                 return;
             }
-            Copy(path, destination, recurse, false);
+
+            if (sourceDrive.IsItemContainer(PathResolver.GetSubpath(path)))
+            {
+                if (!recurse)
+                {
+                    throw new Exception(path + " is a container");
+                }
+
+                if (targetDrive.IsItemContainer(PathResolver.GetSubpath(destination)) && !exactDest)
+                {
+                    destination = MakePath(destination, PathResolver.SplitPath(path).Last());
+                }
+  
+                targetDrive.NewItem(PathResolver.GetSubpath(destination), "Directory", null);
+                foreach (var c in sourceDrive.GetChildNamesList(PathResolver.GetSubpath(path), PathType.Item))
+                {
+                    CopySingleItem(MakePath(path, c), MakePath(destination, c), exactDest: true);
+                }
+                foreach ( var c in sourceDrive.GetChildNamesList(PathResolver.GetSubpath(path), PathType.Container))
+                {
+                    CopyItemInternal(MakePath(path, c), MakePath(destination, c), recurse, deleteOriginal, exactDest: true);
+                }
+            }
+            else
+            {
+                CopySingleItem(path, destination);
+            }
+        }
+
+        protected void CopySingleItem(string path, string destination, bool exactDest = false)
+        {
+            var sourceDrive = PathResolver.FindDrive(path);
+            var targetDrive = PathResolver.FindDrive(destination);
+            var sourcePath = PathResolver.GetSubpath(path);
+            string targetDir, targetFile;
+            if (targetDrive.IsItemContainer(PathResolver.GetSubpath(destination)) && !exactDest)
+            {
+                targetDir = PathResolver.GetSubpath(destination);
+                targetFile = PathResolver.SplitPath(path).Last();
+            }
+            else
+            {
+                targetDir = PathResolver.GetSubpathDirectory(destination);
+                targetFile = PathResolver.SplitPath(destination).Last();
+            }
+            using (var sourceStream = sourceDrive.CopyFrom(sourcePath))
+            using (var targetStream = targetDrive.CopyTo(targetDir, targetFile))
+            {
+                sourceStream.Seek(0, SeekOrigin.Begin);
+                sourceStream.CopyTo(targetStream);
+            }
         }
 
         protected override object MoveItemDynamicParameters(string path, string destination)
