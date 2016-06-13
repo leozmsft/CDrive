@@ -496,7 +496,7 @@ namespace CDrive
             var file = Path.GetFileName(localFile);
             var f = dir.GetFileReference(file);
             var condition = new AccessCondition();
-            f.UploadFromFile(localFile, FileMode.CreateNew);
+            f.UploadFromFile(localFile);
         }
 
         public override bool HasChildItems(string path)

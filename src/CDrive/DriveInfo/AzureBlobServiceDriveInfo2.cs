@@ -17,7 +17,6 @@ namespace CDrive
     {
         public CloudBlobClient Client { get; set; }
         public string Endpoint { get; set; }
-        public string Name { get; set; }
 
         public AzureBlobServiceDriveInfo2(string url, string name)
         {
