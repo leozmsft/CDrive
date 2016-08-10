@@ -5,7 +5,7 @@
     <Members>
       <ScriptProperty>
         <Name>Type</Name>
-        <GetScriptBlock>"Local Dir"</GetScriptBlock>
+        <GetScriptBlock>"Local Drive"</GetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>
         <Name>Description</Name>
