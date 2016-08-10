@@ -150,7 +150,7 @@ namespace CDrive
                         }
                     }
                     break;
-                default:
+                case "":
                     if (r.Parts.Count == 1) //create a table
                     {
                         r.Table.Create();
@@ -159,10 +159,30 @@ namespace CDrive
                     else
                     {
                         UpdateEntities(path, type, newItemValue);
-                        
                     }
                     break;
+                default:
+                    ShowNewItemHelp();
+                    break;
             }
+        }
+
+        private void ShowNewItemHelp()
+        {
+            var help = @"New-Item Helper:
+Type            Expected Value         Comment
+===========     ===============        ==================
+<none>          <optional>             To create a table or update entities
+Policy          start=<days>;expiry=<days>;policy=<policyName>;p=adqu  Create/Update a policy, policy name in last part of path
+sastoken        start=<days>;expiry=<days>;policy=<policyName>;p=adqu  Create an SAS token for the table based on policy or not
+entity          <pk>#<rk>              Create an empty entity with <PK> and <RK>
+insertEntity    <HashTable> or         <HashTable> must has PartitionKey and RowKey keys, and its properties can be of different
+replaceEntity   <DynamicTableEntity>    supported types or string literals
+mergeEntity     ...
+insertOrReplaceEntity  ...
+insertOrMergeEntity    ...
+";
+            this.RootProvider.WriteItemObject(help, string.Empty, false);
         }
 
         private void UpdateEntities(string path, string type, object newItemValue)
@@ -486,7 +506,7 @@ namespace CDrive
                             e.RowKey = hashtable[key] as string;
                             break;
                         default:
-                            AddEntityProperty(e, key, hashtable[key] as string);
+                            AddEntityProperty(e, key, hashtable[key]);
                             break;
 
                     }
@@ -502,58 +522,93 @@ namespace CDrive
             this.RootProvider.WriteWarning(string.Format("Entity {0} # {1} is added.", e.PartitionKey, e.RowKey));
         }
 
-        private void AddEntityProperty(DynamicTableEntity e, string key, string s)
+        private void AddEntityProperty(DynamicTableEntity e, string key, object o)
         {
-            if (s == null)
+            if (o == null)
             {
                 this.RootProvider.WriteWarning(string.Format("Key {0} is skipped as it's null.", key));
                 return;
             }
 
-            if (s.StartsWith("datetime."))
+            var s = o as string;
+            if (s == null)
             {
-                var dt = DateTime.Parse(s.Substring("datetime.".Length));
-                e.Properties.Add(key, new EntityProperty(dt));
+                if (o is DateTime)
+                {
+                    e.Properties.Add(key, new EntityProperty((DateTime)o));
+                }
+                else if (o is int)
+                {
+                    e.Properties.Add(key, new EntityProperty((int)o));
+                }
+                else if (o is long)
+                {
+                    e.Properties.Add(key, new EntityProperty((long)o));
+                }
+                else if (o is bool)
+                {
+                    e.Properties.Add(key, new EntityProperty((bool)o));
+                }
+                else if (o is Guid)
+                {
+                    e.Properties.Add(key, new EntityProperty((Guid)o));
+                }
+                else if (o is double)
+                {
+                    e.Properties.Add(key, new EntityProperty((double)o));
+                }
+                else if (o is byte[])
+                {
+                    e.Properties.Add(key, new EntityProperty((byte[])o));
+                }
             }
+            else
+            {
+                if (s.StartsWith("datetime."))
+                {
+                    var dt = DateTime.Parse(s.Substring("datetime.".Length));
+                    e.Properties.Add(key, new EntityProperty(dt));
+                }
 
-            else if (s.StartsWith("int."))
-            {
-                var dt = Convert.ToInt32(s.Substring("int.".Length));
-                e.Properties.Add(key, new EntityProperty(dt));
-            }
+                else if (s.StartsWith("int."))
+                {
+                    var dt = Convert.ToInt32(s.Substring("int.".Length));
+                    e.Properties.Add(key, new EntityProperty(dt));
+                }
 
-            else if (s.StartsWith("int64."))
-            {
-                var dt = Convert.ToInt64(s.Substring("int64.".Length));
-                e.Properties.Add(key, new EntityProperty(dt));
-            }
+                else if (s.StartsWith("int64."))
+                {
+                    var dt = Convert.ToInt64(s.Substring("int64.".Length));
+                    e.Properties.Add(key, new EntityProperty(dt));
+                }
 
-            else if (s.StartsWith("boolean."))
-            {
-                var dt = Convert.ToBoolean(s.Substring("boolean.".Length));
-                e.Properties.Add(key, new EntityProperty(dt));
-            }
+                else if (s.StartsWith("boolean."))
+                {
+                    var dt = Convert.ToBoolean(s.Substring("boolean.".Length));
+                    e.Properties.Add(key, new EntityProperty(dt));
+                }
 
-            else if (s.StartsWith("guid."))
-            {
-                var dt = Convert.ToBoolean(s.Substring("guid.".Length));
-                e.Properties.Add(key, new EntityProperty(dt));
-            }
+                else if (s.StartsWith("guid."))
+                {
+                    var dt = Convert.ToBoolean(s.Substring("guid.".Length));
+                    e.Properties.Add(key, new EntityProperty(dt));
+                }
 
-            else if (s.StartsWith("double."))
-            {
-                var dt = Convert.ToBoolean(s.Substring("double.".Length));
-                e.Properties.Add(key, new EntityProperty(dt));
+                else if (s.StartsWith("double."))
+                {
+                    var dt = Convert.ToBoolean(s.Substring("double.".Length));
+                    e.Properties.Add(key, new EntityProperty(dt));
+                }
+                else if (s.StartsWith("binary."))
+                {
+                    var dt = Convert.FromBase64String(s.Substring("binary.".Length));
+                    e.Properties.Add(key, new EntityProperty(dt));
+                }
+                else
+                {
+                    e.Properties.Add(key, new EntityProperty(s));
+                }
             }
-            else if (s.StartsWith("binary."))
-            {
-                var dt = Convert.FromBase64String(s.Substring("binary.".Length));
-                e.Properties.Add(key, new EntityProperty(dt));
-            }
-            else {
-                e.Properties.Add(key, new EntityProperty(s));
-            }
-            
         }
 
         private SharedAccessTablePolicy CreateTablePermission(string permissions, ref string policyName)
