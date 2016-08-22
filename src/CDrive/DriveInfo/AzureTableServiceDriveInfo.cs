@@ -491,35 +491,54 @@ insertOrMergeEntity    ...
 
         private void CreateEntity(AzureTablePathResolveResult r, object obj, Func<ITableEntity, TableOperation> func)
         {
-            var e = new DynamicTableEntity();
+            DynamicTableEntity e = null;
             if (obj is Hashtable)
             {
-                var hashtable = obj as Hashtable;
-                foreach (string key in hashtable.Keys)
-                {
-                    switch (key.ToLowerInvariant())
-                    {
-                        case "partitionkey":
-                            e.PartitionKey = hashtable[key] as string;
-                            break;
-                        case "rowkey":
-                            e.RowKey = hashtable[key] as string;
-                            break;
-                        default:
-                            AddEntityProperty(e, key, hashtable[key]);
-                            break;
-
-                    }
+                e = ConvertToTableEntity(obj as Hashtable);
+            }
+            else if (obj is PSObject)
+            {
+                var bo = ((PSObject)obj).BaseObject;
+                if (bo is Hashtable) {
+                    e = ConvertToTableEntity(bo as Hashtable);
+                }
+                else if (bo is DynamicTableEntity) {
+                    e = bo as DynamicTableEntity;
                 }
             }
-            else
+
+
+            if (e == null)
             {
-                e = ((PSObject) obj).BaseObject as DynamicTableEntity;
+                throw new Exception("Unknown object caught.");
             }
 
             var o = func(e);
             r.Table.Execute(o);
             this.RootProvider.WriteWarning(string.Format("Entity {0} # {1} is added.", e.PartitionKey, e.RowKey));
+        }
+
+        private DynamicTableEntity ConvertToTableEntity(Hashtable hashtable)
+        {
+            var e = new DynamicTableEntity();
+            foreach (string key in hashtable.Keys)
+            {
+                switch (key.ToLowerInvariant())
+                {
+                    case "partitionkey":
+                        e.PartitionKey = hashtable[key] as string;
+                        break;
+                    case "rowkey":
+                        e.RowKey = hashtable[key] as string;
+                        break;
+                    default:
+                        AddEntityProperty(e, key, hashtable[key]);
+                        break;
+
+                }
+            }
+
+            return e;
         }
 
         private void AddEntityProperty(DynamicTableEntity e, string key, object o)
@@ -533,6 +552,11 @@ insertOrMergeEntity    ...
             var s = o as string;
             if (s == null)
             {
+                if (o is PSObject)
+                {
+                    o = (o as PSObject).BaseObject;
+                }
+
                 if (o is DateTime)
                 {
                     e.Properties.Add(key, new EntityProperty((DateTime)o));
