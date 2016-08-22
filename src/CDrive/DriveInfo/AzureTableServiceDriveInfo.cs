@@ -506,6 +506,10 @@ insertOrMergeEntity    ...
                     e = bo as DynamicTableEntity;
                 }
             }
+            else if (obj is DynamicTableEntity)
+            {
+                e = obj as DynamicTableEntity;
+            }
 
 
             if (e == null)
