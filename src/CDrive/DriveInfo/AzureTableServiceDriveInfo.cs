@@ -151,6 +151,7 @@ namespace CDrive
                     }
                     break;
                 case "":
+                case "directory":
                     if (r.Parts.Count == 1) //create a table
                     {
                         r.Table.Create();
