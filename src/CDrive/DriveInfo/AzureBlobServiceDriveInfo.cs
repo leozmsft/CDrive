@@ -673,7 +673,7 @@ namespace CDrive
             }
         }
 
-        private IEnumerable<IListBlobItem> ListBlob(ICloudBlob file)
+        private IEnumerable<IListBlobItem> ListBlob(CloudBlob file)
         {
             return new IListBlobItem[] { file };
         }
@@ -771,7 +771,7 @@ namespace CDrive
             return null;
         }
 
-        public ICloudBlob GetBlob(string path, PathType expectedType)
+        public CloudBlob GetBlob(string path, PathType expectedType)
         {
             var r = AzureBlobPathResolver.ResolvePath(this.Client, path, hint: expectedType);
             if (r.PathType == expectedType)
@@ -964,7 +964,7 @@ namespace CDrive
 
     class AzureBlobReader : IContentReader
     {
-        private ICloudBlob File { get; set; }
+        private CloudBlob File { get; set; }
         private long length = 0;
         private const int unit = 1024 * 64; //64KB
 
@@ -973,7 +973,7 @@ namespace CDrive
         private int pointer = -1;
         private long fileOffset = 0;
 
-        public AzureBlobReader(ICloudBlob file)
+        public AzureBlobReader(CloudBlob file)
         {
             this.File = file;
             this.File.FetchAttributes();

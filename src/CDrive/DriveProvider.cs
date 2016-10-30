@@ -414,6 +414,11 @@ namespace CDrive
             using (var sourceStream = sourceDrive.CopyFrom(sourcePath))
             using (var targetStream = targetDrive.CopyTo(targetDir, targetFile))
             {
+                if (sourceStream == null || targetStream == null)
+                {
+                    return;
+                }
+
                 sourceStream.Seek(0, SeekOrigin.Begin);
                 sourceStream.CopyTo(targetStream);
             }

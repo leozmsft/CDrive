@@ -16,7 +16,7 @@ namespace CDrive
         public CloudBlobDirectory Directory { get; set; }
         public CloudBlobDirectory RootDirectory { get; set; }
         public CloudBlobContainer Container { get; set; }
-        public ICloudBlob Blob { get; set; }
+        public CloudBlob Blob { get; set; }
         public List<string> Parts { get; set; }
         public bool Exists()
         {

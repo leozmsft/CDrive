@@ -83,7 +83,7 @@ namespace CDrive
 
                                 if (exists)
                                 {
-                                    result.Blob = blob as ICloudBlob;
+                                    result.Blob = blob as CloudBlob;
                                     result.PathType = PathType.AzureBlobBlock;
                                     return result;
                                 }
@@ -94,7 +94,7 @@ namespace CDrive
                         }
                         else
                         {
-                            result.Blob = blob as ICloudBlob;
+                            result.Blob = blob as CloudBlob;
                             result.PathType = PathType.AzureBlobBlock;
                             return result;
                         }
@@ -115,7 +115,7 @@ namespace CDrive
 
                                 if (exists)
                                 {
-                                    result.Blob = blob as ICloudBlob;
+                                    result.Blob = blob as CloudBlob;
                                     result.PathType = PathType.AzureBlobPage;
                                     return result;
                                 }
@@ -126,7 +126,7 @@ namespace CDrive
                         }
                         else
                         {
-                            result.Blob = blob as ICloudBlob;
+                            result.Blob = blob as CloudBlob;
                             result.PathType = PathType.AzureBlobPage;
                             return result;
                         }
@@ -147,7 +147,7 @@ namespace CDrive
 
                                 if (exists)
                                 {
-                                    result.Blob = blob as ICloudBlob;
+                                    result.Blob = blob as CloudBlob;
                                     result.PathType = PathType.AzureBlobAppend;
                                     return result;
                                 }
@@ -158,7 +158,7 @@ namespace CDrive
                         }
                         else
                         {
-                            result.Blob = blob as ICloudBlob;
+                            result.Blob = blob as CloudBlob;
                             result.PathType = PathType.AzureBlobAppend;
                             return result;
                         }

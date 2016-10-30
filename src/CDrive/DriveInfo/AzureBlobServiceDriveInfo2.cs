@@ -233,15 +233,19 @@ namespace CDrive
 
         public override IContentReader GetContentReader(string path)
         {
-            //var r = AzureBlobPathResolver2.ResolvePath(this.Client, path);
-            //var blob = r.Container.GetBlobReference(r.BlobQuery.Prefix);
-            //if (r.PathType == PathType.AzureBlobBlock 
-            //    || r.PathType == PathType.AzureBlobPage
-            //    || r.PathType == PathType.AzureBlobAppend)
-            //{
-            //    var reader = new AzureBlobReader(GetBlob(path, r.PathType));
-            //    return reader;
-            //}
+            var r = AzureBlobPathResolver2.ResolvePath(this.Client, path);
+            var blob = r.Container.GetBlobReference(r.BlobQuery.Prefix);
+            if (r.PathType == PathType.AzureBlobQuery)
+            {
+                var files = this.ListFiles(r.Container, r.BlobQuery);
+                if (files.Count() == 0)
+                {
+                    return null;
+                }
+
+                var reader = new AzureBlobReader(new CloudBlob(files.First().Uri, this.Client.Credentials));
+                return reader;
+            }
 
             return null;
         }
@@ -293,12 +297,28 @@ namespace CDrive
 
         public override Stream CopyFrom(string path)
         {
-            throw new NotImplementedException();
+            var r = AzureBlobPathResolver2.ResolvePath(this.Client, path);
+            var files = this.ListFiles(r.Container, r.BlobQuery);
+            if (files.Count() > 0)
+            {
+                var blob = new CloudBlob(files.First().Uri, this.Client.Credentials);
+                return blob.OpenRead();
+            }
+
+            return null;
         }
 
-        public override Stream CopyTo(string dir, string name)
+        public override Stream CopyTo(string path, string name)
         {
-            throw new NotImplementedException();
+            var r = AzureBlobPathResolver2.ResolvePath(this.Client, path + PathResolver.DirSeparator + name);
+            if (r.PathType == PathType.AzureBlobQuery)
+            {
+                var prefix = r.BlobQuery.Prefix;
+                var blob = new CloudBlockBlob(new Uri(r.Container.Uri, prefix), this.Client.Credentials);
+                return blob.OpenWrite();
+            }
+
+            return null;
         }
 
         public override IList<string> GetChildNamesList(string path, PathType type)
