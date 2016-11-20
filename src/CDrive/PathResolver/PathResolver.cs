@@ -141,7 +141,7 @@ namespace CDrive
             }
 
             var parts = PathResolver.SplitPath(path);
-            return PathResolver.Drives[parts[0]];
+            return PathResolver.Drives[parts[0].ToLowerInvariant()];
         }
     }
 }

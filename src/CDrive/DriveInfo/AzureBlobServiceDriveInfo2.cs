@@ -237,14 +237,12 @@ namespace CDrive
             var blob = r.Container.GetBlobReference(r.BlobQuery.Prefix);
             if (r.PathType == PathType.AzureBlobQuery)
             {
-                var files = this.ListFiles(r.Container, r.BlobQuery);
-                if (files.Count() == 0)
+                var firstFile = this.ListFiles(r.Container, r.BlobQuery).FirstOrDefault();
+                if (firstFile != default(IListBlobItem))
                 {
-                    return null;
+                    var reader = new AzureBlobReader(new CloudBlob(firstFile.Uri, this.Client.Credentials));
+                    return reader;
                 }
-
-                var reader = new AzureBlobReader(new CloudBlob(files.First().Uri, this.Client.Credentials));
-                return reader;
             }
 
             return null;
@@ -314,7 +312,7 @@ namespace CDrive
             if (r.PathType == PathType.AzureBlobQuery)
             {
                 var prefix = r.BlobQuery.Prefix;
-                var blob = new CloudBlockBlob(new Uri(r.Container.Uri, prefix), this.Client.Credentials);
+                var blob = new CloudBlockBlob(new Uri(r.Container.Uri.ToString() + "/" + prefix), this.Client.Credentials);
                 return blob.OpenWrite();
             }
 

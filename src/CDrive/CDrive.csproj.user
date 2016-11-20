@@ -4,6 +4,6 @@
     <StartAction>Program</StartAction>
     <StartProgram>c:\windows\system32\WindowsPowerShell\v1.0\powershell.exe</StartProgram>
     <StartArguments>-noexit -ExecutionPolicy Unrestricted -File .\start.ps1</StartArguments>
-    <StartWorkingDirectory>E:\cdrive\CDrive\src\CDrive\bin\Debug</StartWorkingDirectory>
+    <StartWorkingDirectory>C:\GitHub\CDrive\src\CDrive\bin\Debug</StartWorkingDirectory>
   </PropertyGroup>
 </Project>

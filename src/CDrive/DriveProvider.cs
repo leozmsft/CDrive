@@ -145,7 +145,7 @@ namespace CDrive
                 }
                 else
                 {
-                    PathResolver.Drives.Add(parts[0], drive);
+                    PathResolver.Drives.Add(parts[0].ToLowerInvariant(), drive);
                 }
             }
             else
