@@ -493,25 +493,15 @@ insertOrMergeEntity    ...
         private void CreateEntity(AzureTablePathResolveResult r, object obj, Func<ITableEntity, TableOperation> func)
         {
             DynamicTableEntity e = null;
+            obj = GetBaseObject(obj);
             if (obj is Hashtable)
             {
                 e = ConvertToTableEntity(obj as Hashtable);
-            }
-            else if (obj is PSObject)
-            {
-                var bo = ((PSObject)obj).BaseObject;
-                if (bo is Hashtable) {
-                    e = ConvertToTableEntity(bo as Hashtable);
-                }
-                else if (bo is DynamicTableEntity) {
-                    e = bo as DynamicTableEntity;
-                }
             }
             else if (obj is DynamicTableEntity)
             {
                 e = obj as DynamicTableEntity;
             }
-
 
             if (e == null)
             {
@@ -531,10 +521,10 @@ insertOrMergeEntity    ...
                 switch (key.ToLowerInvariant())
                 {
                     case "partitionkey":
-                        e.PartitionKey = hashtable[key] as string;
+                        e.PartitionKey = GetBaseObject(hashtable[key]) as string;
                         break;
                     case "rowkey":
-                        e.RowKey = hashtable[key] as string;
+                        e.RowKey = GetBaseObject(hashtable[key]) as string;
                         break;
                     default:
                         AddEntityProperty(e, key, hashtable[key]);
@@ -546,6 +536,16 @@ insertOrMergeEntity    ...
             return e;
         }
 
+        private object GetBaseObject(object o)
+        {
+            if (o is PSObject)
+            {
+                return (o as PSObject).BaseObject;
+            }
+
+            return o;
+        }
+
         private void AddEntityProperty(DynamicTableEntity e, string key, object o)
         {
             if (o == null)
@@ -554,45 +554,39 @@ insertOrMergeEntity    ...
                 return;
             }
 
-            var s = o as string;
-            if (s == null)
-            {
-                if (o is PSObject)
-                {
-                    o = (o as PSObject).BaseObject;
-                }
+            o = GetBaseObject(o);
 
-                if (o is DateTime)
-                {
-                    e.Properties.Add(key, new EntityProperty((DateTime)o));
-                }
-                else if (o is int)
-                {
-                    e.Properties.Add(key, new EntityProperty((int)o));
-                }
-                else if (o is long)
-                {
-                    e.Properties.Add(key, new EntityProperty((long)o));
-                }
-                else if (o is bool)
-                {
-                    e.Properties.Add(key, new EntityProperty((bool)o));
-                }
-                else if (o is Guid)
-                {
-                    e.Properties.Add(key, new EntityProperty((Guid)o));
-                }
-                else if (o is double)
-                {
-                    e.Properties.Add(key, new EntityProperty((double)o));
-                }
-                else if (o is byte[])
-                {
-                    e.Properties.Add(key, new EntityProperty((byte[])o));
-                }
-            }
-            else
+            if (o is DateTime)
             {
+                e.Properties.Add(key, new EntityProperty((DateTime)o));
+            }
+            else if (o is int)
+            {
+                e.Properties.Add(key, new EntityProperty((int)o));
+            }
+            else if (o is long)
+            {
+                e.Properties.Add(key, new EntityProperty((long)o));
+            }
+            else if (o is bool)
+            {
+                e.Properties.Add(key, new EntityProperty((bool)o));
+            }
+            else if (o is Guid)
+            {
+                e.Properties.Add(key, new EntityProperty((Guid)o));
+            }
+            else if (o is double)
+            {
+                e.Properties.Add(key, new EntityProperty((double)o));
+            }
+            else if (o is byte[])
+            {
+                e.Properties.Add(key, new EntityProperty((byte[])o));
+            }
+            else if (o is string)
+            {
+                var s = o as string;
                 if (s.StartsWith("datetime."))
                 {
                     var dt = DateTime.Parse(s.Substring("datetime.".Length));
