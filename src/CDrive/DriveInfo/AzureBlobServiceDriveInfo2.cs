@@ -118,7 +118,11 @@ namespace CDrive
                     break;
                 case PathType.AzureBlobQuery:
                     var files = ListItems(path) as IEnumerable<IListBlobItem>;
-                    // TODO
+                    foreach(var file in files)
+                    {
+                        var blob = new CloudBlob(file.Uri, this.Client.Credentials);
+                        blob.Delete();
+                    }
 
                     break;
                 default:
