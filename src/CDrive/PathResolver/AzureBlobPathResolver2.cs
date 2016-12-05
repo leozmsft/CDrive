@@ -56,17 +56,24 @@ namespace CDrive
                         continue;
                     }
 
-                    if (p.StartsWith("details=") && !p.EndsWith("details="))
+                    else if (p.StartsWith("details=") && !p.EndsWith("details="))
                     {
                         var details = BlobListingDetails.All;
                         if (Enum.TryParse<BlobListingDetails>(p.Substring("details=".Length), true, out details))
                         {
                             q.BlobListingDetails = details;
                             continue;
-                        } else
+                        }
+                        else
                         {
                             throw new Exception("Allowed values for details: None, Snapshots, Metadata, UncommittedBlobs, Copy, All");
                         }
+                    }
+
+                    else if (p.Equals("show=directory"))
+                    {
+                        q.ShowDirectory = true;
+                        continue;
                     }
 
                     prefixList.Add(p);

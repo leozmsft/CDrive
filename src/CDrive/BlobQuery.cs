@@ -6,6 +6,7 @@ namespace CDrive
     {
         public string Prefix { get; set; }
         public int MaxResult { get; set; }
+        public bool ShowDirectory { get; set; }
         public BlobListingDetails BlobListingDetails { get; set; }
 
         public BlobQuery()

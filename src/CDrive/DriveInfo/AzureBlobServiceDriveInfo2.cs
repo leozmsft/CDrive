@@ -35,12 +35,27 @@ namespace CDrive
             this.Name = name;
         }
 
+        internal void CreateDirectory(string path)
+        {
+            var parts = PathResolver.SplitPath(path);
+
+
+            if (parts.Count > 0)
+            {
+                CreateContainerIfNotExists(parts[0]);
+            }
+        }
+
         public override void NewItem(
                             string path,
                             string type,
                             object newItemValue)
         {
-            if (string.Equals(type, "PageBlob", StringComparison.InvariantCultureIgnoreCase))
+            if (string.Equals(type, "Directory", StringComparison.InvariantCultureIgnoreCase))
+            {
+                this.CreateDirectory(path);
+            }
+            else if (string.Equals(type, "PageBlob", StringComparison.InvariantCultureIgnoreCase))
             {
                 if (newItemValue != null)
                 {
@@ -79,8 +94,280 @@ namespace CDrive
                     this.CreateAppendBlob(path, newItemValue.ToString());
                 }
             }
+            else if (string.Equals(type, "RandomPages", StringComparison.InvariantCultureIgnoreCase))
+            {
+                //fill page blob with random data, each page data is 512Byte, and count is required
+                //e.g. ni PageBlob -type RandomPages -value <count>
+                if (newItemValue != null)
+                {
+                    var size = 0L;
+                    if (long.TryParse(newItemValue.ToString(), out size))
+                    {
+                        this.FillDataInPageBlob(path, size);
+                    }
+                    else
+                    {
+                        this.RootProvider.WriteWarning("Value is required.");
+                    }
+                }
+
+            }
+            else if (string.Equals(type, "ListPages", StringComparison.InvariantCultureIgnoreCase))
+            {
+                //List page ranges in page blob
+                this.ListPageRanges(path);
+            }
+            else if (string.Equals(type, "ContainerSAStoken", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count > 0)
+                {
+                    var containerName = parts[0];
+                    var container = this.Client.GetContainerReference(containerName);
+                    var policyName = string.Empty;
+                    var policy = CreateBlobPolicy(newItemValue as string, ref policyName);
+
+                    if (policyName != string.Empty) //policy-based SAStoken
+                    {
+                        var token = container.GetSharedAccessSignature(policy, policyName);
+                        this.RootProvider.WriteItemObject(token, path, false);
+                    }
+                    else
+                    {
+                        var token = container.GetSharedAccessSignature(policy);
+                        this.RootProvider.WriteItemObject(token, path, false);
+                    }
+                }
+            }
+            else if (string.Equals(type, "BlobSAStoken", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count > 1)
+                {
+                    var containerName = parts[0];
+                    var container = this.Client.GetContainerReference(containerName);
+                    var blob = container.GetBlobReference(PathResolver.GetSubpath(path));
+                    var policyName = string.Empty;
+                    var policy = CreateBlobPolicy(newItemValue as string, ref policyName);
+
+                    if (policyName != string.Empty) //policy-based SAStoken
+                    {
+                        var token = blob.GetSharedAccessSignature(policy, policyName);
+                        this.RootProvider.WriteItemObject(blob.StorageUri.PrimaryUri.ToString() + token, path, false);
+                    }
+                    else
+                    {
+                        var token = blob.GetSharedAccessSignature(policy);
+                        this.RootProvider.WriteItemObject(blob.StorageUri.PrimaryUri.ToString() + token, path, false);
+                    }
+                }
+            }
+            else if (string.Equals(type, "Policy", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count > 0)
+                {
+                    var containerName = parts[0];
+                    var container = this.Client.GetContainerReference(containerName);
+                    var policyName = parts.Last();
+                    var policyPlaceHolder = string.Empty;
+                    var policy = CreateBlobPolicy(newItemValue as string, ref policyPlaceHolder);
+
+                    var permissions = container.GetPermissions();
+                    if (permissions.SharedAccessPolicies.ContainsKey(policyName))
+                    {
+                        if (!this.RootProvider.ShouldContinue(string.Format("Should continue to update existing policy {0}?", policyName), "Policy existed"))
+                        {
+                            this.RootProvider.WriteWarning("Cancelled");
+                            return;
+                        }
+                        else
+                        {
+                            permissions.SharedAccessPolicies[policyName] = policy;
+                        }
+                    }
+                    else
+                    {
+                        permissions.SharedAccessPolicies.Add(policyName, policy);
+                    }
+
+                    this.RootProvider.WriteWarning(string.Format("Policy {0} updated or added.", policyName));
+                }
+
+                return;
+            }
+            else if (string.Equals(type, "ListPolicy", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count > 0)
+                {
+                    var containerName = parts[0];
+                    var container = this.Client.GetContainerReference(containerName);
+
+                    var permissions = container.GetPermissions();
+                    foreach (var policy in permissions.SharedAccessPolicies.Keys)
+                    {
+                        this.RootProvider.WriteWarning(string.Format("Policy {0}", policy));
+                    }
+
+                    this.RootProvider.WriteWarning(string.Format("{0} Policies listed.", permissions.SharedAccessPolicies.Keys.Count));
+                }
+
+                return;
+
+            }
         }
-        
+
+        private SharedAccessBlobPolicy CreateBlobPolicy(string permissions, ref string policyName)
+        {
+            if (permissions == null)
+            {
+                throw new Exception("Value should be set. Expected: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+            }
+
+            ///permissions: start=0;expiry=30;policy=hello;p=rwdl
+            ///
+            var set = permissions.Split(';');
+            var policy = new SharedAccessBlobPolicy();
+            foreach (var s in set)
+            {
+                var p = s.Split('=');
+                switch (p[0].ToLowerInvariant())
+                {
+                    case "expiry":
+                        policy.SharedAccessExpiryTime = DateTime.Now.AddDays(Convert.ToInt32(p[1]));
+                        break;
+                    case "start":
+                        policy.SharedAccessStartTime = DateTime.Now.AddDays(Convert.ToInt32(p[1]));
+                        break;
+                    case "policy":
+                        policyName = p[1];
+                        break;
+                    case "p":
+                        for (var i = 0; i < p[1].Length; ++i)
+                        {
+                            switch (Char.ToLowerInvariant(p[1][i]))
+                            {
+                                case 'r':
+                                    policy.Permissions |= SharedAccessBlobPermissions.Read;
+                                    break;
+                                case 'w':
+                                    policy.Permissions |= SharedAccessBlobPermissions.Write;
+                                    break;
+                                case 'd':
+                                    policy.Permissions |= SharedAccessBlobPermissions.Delete;
+                                    break;
+                                case 'l':
+                                    policy.Permissions |= SharedAccessBlobPermissions.List;
+                                    break;
+                            }
+                        }
+                        break;
+                    default:
+                        throw new Exception("Unknown parameter: " + p[0] + ". Expected: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+                }
+            }
+
+            return policy;
+        }
+
+        private void ListPageRanges(string path)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetPageBlobReference(PathResolver.GetSubpath(path));
+                if (!blob.Exists())
+                {
+                    this.RootProvider.WriteWarning("PageBlob " + path + " does not exist.");
+                    return;
+                }
+
+                blob.FetchAttributes();
+                var totalLength = blob.Properties.Length;
+
+                var count = 0L;
+                var offset = 0L;
+                var length = 4 * 1024 * 1024L; //4MB
+                while (true)
+                {
+                    PageRange page = null;
+                    var round = 0L;
+
+                    length = (offset + length > totalLength) ? (totalLength - offset) : length;
+                    foreach (var r in blob.GetPageRanges(offset, length))
+                    {
+                        page = r;
+                        round++;
+                        this.RootProvider.WriteWarning(string.Format("[{3}]\t[{0} - {1}] {2}", r.StartOffset, r.EndOffset, r.EndOffset - r.StartOffset + 1, count++));
+                    }
+
+                    if (offset + length >= totalLength)
+                    {
+                        //reach the end
+                        break;
+                    }
+
+                    //1. move offset
+                    offset += length;
+
+                    //2. calculate next length
+                    if (round < 200)
+                    {
+                        length *= 2;
+                    }
+                    else if (round > 500)
+                    {
+                        length /= 2;
+                    }
+                }
+            }
+            else
+            {
+                this.RootProvider.WriteWarning("Please specify the page blob path.");
+            }
+        }
+
+        private void FillDataInPageBlob(string path, long count)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetPageBlobReference(PathResolver.GetSubpath(path));
+                if (!blob.Exists())
+                {
+                    this.RootProvider.WriteWarning("PageBlob " + path + " does not exist.");
+                    return;
+                }
+
+                blob.FetchAttributes();
+                var total = blob.Properties.Length / 512;
+                var data = new byte[512];
+                var random = new Random();
+                random.NextBytes(data);
+
+                this.RootProvider.WriteWarning("Start writing pages...");
+                var tasks = new Task[count];
+
+                for (var i = 0; i < count; ++i)
+                {
+                    var p = (long)(random.NextDouble() * total);
+
+                    var task = blob.WritePagesAsync(new MemoryStream(data), p * 512, null);
+                    tasks[i] = task;
+                }
+
+                this.RootProvider.WriteWarning("Waiting writing pages...");
+                Task.WaitAll(tasks);
+                this.RootProvider.WriteWarning("Completed writing pages...");
+            }
+            else
+            {
+                this.RootProvider.WriteWarning("Please specify the page blob path.");
+            }
+        }
+
+
 
         public override void GetChildItems(string path, bool recurse)
         {
@@ -150,12 +437,40 @@ namespace CDrive
         {
             if (blobQuery.MaxResult == -1)
             {
-                return container.ListBlobs(blobQuery.Prefix, true, blobQuery.BlobListingDetails);
+                return container.ListBlobs(blobQuery.Prefix, !blobQuery.ShowDirectory, blobQuery.BlobListingDetails);
             }
             else
             {
-                var seg = container.ListBlobsSegmented(blobQuery.Prefix, true, blobQuery.BlobListingDetails, blobQuery.MaxResult, null, null, null);
-                return seg.Results;
+                return ListFilesWithMaxResults(container, blobQuery);
+            }
+        }
+
+        private IEnumerable<IListBlobItem> ListFilesWithMaxResults(CloudBlobContainer container, BlobQuery blobQuery)
+        {
+            BlobContinuationToken token = null;
+            var remaining = blobQuery.MaxResult;
+            while (true)
+            {
+                var seg = container.ListBlobsSegmented(blobQuery.Prefix, !blobQuery.ShowDirectory, blobQuery.BlobListingDetails, remaining, token, null, null);
+                foreach (var i in seg.Results)
+                {
+                    remaining--;
+                    yield return i;
+
+                    if (remaining == 0)
+                    {
+                        yield break;
+                    }
+                }
+
+                if (seg.ContinuationToken != null)
+                {
+                    token = seg.ContinuationToken;
+                }
+                else
+                {
+                    yield break;
+                }
             }
         }
 

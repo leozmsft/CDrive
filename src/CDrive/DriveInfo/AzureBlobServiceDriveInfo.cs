@@ -80,7 +80,6 @@ namespace CDrive
             else if (string.Equals(type, "ListPages", StringComparison.InvariantCultureIgnoreCase))
             {
                 //List page ranges in page blob
-                //e.g. ni pageBlob -type ListPages
                 this.ListPageRanges(path);
             }
             else if (string.Equals(type, "ContainerSAStoken", StringComparison.InvariantCultureIgnoreCase))
@@ -158,6 +157,25 @@ namespace CDrive
                     }
 
                     this.RootProvider.WriteWarning(string.Format("Policy {0} updated or added.", policyName));
+                }
+
+                return;
+            }
+            else if (string.Equals(type, "ListPolicy", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count > 0)
+                {
+                    var containerName = parts[0];
+                    var container = this.Client.GetContainerReference(containerName);
+
+                    var permissions = container.GetPermissions();
+                    foreach(var policy in permissions.SharedAccessPolicies.Keys)
+                    {
+                        this.RootProvider.WriteWarning(string.Format("Policy {0}", policy));
+                    }
+
+                    this.RootProvider.WriteWarning(string.Format("{0} Policies listed.", permissions.SharedAccessPolicies.Keys.Count));
                 }
 
                 return;
@@ -272,7 +290,6 @@ namespace CDrive
             }
             else
             {
-                this.RootProvider.WriteWarning("No operation type is specified by <-type>.");
                 this.RootProvider.WriteWarning("Supported operation type: ");
                 this.RootProvider.WriteWarning("\tDirectory:            Create directory <-path>");
                 this.RootProvider.WriteWarning("\tPageBlob:             Create page blob <-path> with size <-value>");
@@ -283,6 +300,7 @@ namespace CDrive
                 this.RootProvider.WriteWarning("\tContainerSAStoken:    Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
                 this.RootProvider.WriteWarning("\tBlobSAStoken:         Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
                 this.RootProvider.WriteWarning("\tPolicy:               Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+                this.RootProvider.WriteWarning("\tListPolicy:           List existing policy names");
                 this.RootProvider.WriteWarning("\tPermission:           Supported <-value>: PublicContainer, PrivateContainer");
                 this.RootProvider.WriteWarning("\tAsyncCopy:            AsyncCopy blob from url <-value> to <-path>");
                 this.RootProvider.WriteWarning("\tCopyStatus:           Show copy status of blob <-path>");
