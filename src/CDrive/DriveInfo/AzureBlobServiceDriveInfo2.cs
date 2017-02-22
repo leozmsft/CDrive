@@ -216,6 +216,194 @@ namespace CDrive
                 return;
 
             }
+
+            else if (string.Equals(type, "BlockBlob", StringComparison.InvariantCultureIgnoreCase))
+            {
+
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count == 1)
+                {
+                    this.CreateContainerIfNotExists(parts[0]);
+                }
+                else
+                {
+                    this.CreateBlockBlob(path, newItemValue.ToString());
+                }
+            }
+            else if (string.Equals(type, "AppendBlob", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count == 1)
+                {
+                    this.CreateContainerIfNotExists(parts[0]);
+                }
+                else
+                {
+                    this.CreateAppendBlob(path, newItemValue.ToString());
+                }
+            }
+            else if (string.Equals(type, "Permission", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count > 0)
+                {
+                    switch (newItemValue.ToString().ToLowerInvariant())
+                    {
+                        case "publiccontainer":
+                            this.SetContainerPermission(containerName: parts[0], toBePublic: true);
+                            this.RootProvider.WriteWarning(string.Format("Done setting container {0} to be public", parts[0]));
+                            break;
+                        case "privatecontainer":
+                            this.SetContainerPermission(containerName: parts[0], toBePublic: false);
+                            this.RootProvider.WriteWarning(string.Format("Done setting container {0} to be private", parts[0]));
+                            break;
+                        default:
+                            this.RootProvider.WriteWarning("Invalid value. Supported values: PublicContainer, PrivateContainer");
+                            break;
+                    }
+                }
+                else
+                {
+                    this.RootProvider.WriteWarning("Please do this operation in a container.");
+                }
+            }
+            else if (string.Equals(type, "AsyncCopy", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count > 1)
+                {
+                    if (newItemValue != null && newItemValue.ToString().Length > 0)
+                    {
+                        this.AsyncCopy(path, newItemValue.ToString());
+                        this.RootProvider.WriteWarning("Started Async copy");
+                    }
+                    else
+                    {
+                        this.RootProvider.WriteWarning("Must specify the source url in -value.");
+                    }
+
+                }
+                else
+                {
+                    this.RootProvider.WriteWarning("Please do this operation in a container and specify the target blob name.");
+                }
+            }
+            else if (string.Equals(type, "CopyStatus", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count > 1)
+                {
+                    this.ShowCopyStatus(path);
+                }
+                else
+                {
+                    this.RootProvider.WriteWarning("Please do this operation in a container and specify the target blob name.");
+                }
+            }
+            else if (string.Equals(type, "CancelCopy", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var parts = PathResolver.SplitPath(path);
+                if (parts.Count > 1)
+                {
+                    if (newItemValue != null && newItemValue.ToString().Length > 0)
+                    {
+                        this.CancelCopy(path, newItemValue.ToString());
+                    }
+                    else
+                    {
+                        this.RootProvider.WriteWarning("Must specify the copy ID in -value.");
+                    }
+
+                }
+                else
+                {
+                    this.RootProvider.WriteWarning("Please do this operation in a container and specify the target blob name.");
+                }
+            }
+            else if (string.Equals(type, "Etag", StringComparison.InvariantCultureIgnoreCase))
+            {
+                this.ShowEtag(path);
+            }
+            else
+            {
+                this.RootProvider.WriteWarning("Supported operation type: ");
+                this.RootProvider.WriteWarning("\tDirectory:            Create directory <-path>");
+                this.RootProvider.WriteWarning("\tPageBlob:             Create page blob <-path> with size <-value>");
+                this.RootProvider.WriteWarning("\tRandomPages:          Fill page blob <-path> with size <-value> using random data");
+                this.RootProvider.WriteWarning("\tListPages:            List page ranges in page blob <-path>");
+                this.RootProvider.WriteWarning("\tBlockBlob:            Create block blob <-path> with contents <-value>");
+                this.RootProvider.WriteWarning("\tAppendBlob:           Create append blob <-path> with contents <-value>");
+                this.RootProvider.WriteWarning("\tContainerSAStoken:    Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+                this.RootProvider.WriteWarning("\tBlobSAStoken:         Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+                this.RootProvider.WriteWarning("\tPolicy:               Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+                this.RootProvider.WriteWarning("\tListPolicy:           List existing policy names");
+                this.RootProvider.WriteWarning("\tPermission:           Supported <-value>: PublicContainer, PrivateContainer");
+                this.RootProvider.WriteWarning("\tAsyncCopy:            AsyncCopy blob from url <-value> to <-path>");
+                this.RootProvider.WriteWarning("\tCopyStatus:           Show copy status of blob <-path>");
+                this.RootProvider.WriteWarning("\tCancelCopy:           Specify the destBlob in <-path> and the copy ID in <-value>.");
+                this.RootProvider.WriteWarning("\tEtag:                 Show the Etag of the blob <-path> ");
+            }
+        }
+
+        private void ShowEtag(string path)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetBlobReference(PathResolver.GetSubpath(path));
+                blob.FetchAttributes();
+                this.RootProvider.WriteItemObject(blob.Properties.ETag, path, false);
+            }
+            else
+            {
+                this.RootProvider.WriteWarning("Please specify the target blob.");
+            }
+        }
+
+        private void CancelCopy(string path, string copyId)
+        {
+            var parts = PathResolver.SplitPath(path);
+            var container = this.Client.GetContainerReference(parts[0]);
+            var destBlob = container.GetBlobReference(PathResolver.GetSubpath(path));
+            destBlob.AbortCopy(copyId);
+        }
+
+        private void ShowCopyStatus(string path)
+        {
+            var parts = PathResolver.SplitPath(path);
+            var container = this.Client.GetContainerReference(parts[0]);
+            var destBlob = container.GetBlobReference(PathResolver.GetSubpath(path));
+            destBlob.FetchAttributes();
+            var state = destBlob.CopyState;
+            if (state != null)
+            {
+                this.RootProvider.WriteWarning(string.Format("Copy is {0}\r\nId: {1}\r\nBytes Copied: {2}/{3}",
+                   state.Status.ToString(),
+                   state.CopyId,
+                   state.BytesCopied,
+                   state.TotalBytes));
+            }
+            else
+            {
+                this.RootProvider.WriteWarning(string.Format("CopyStatus is null"));
+            }
+        }
+
+        private void AsyncCopy(string path, string url)
+        {
+            var parts = PathResolver.SplitPath(path);
+            var container = this.Client.GetContainerReference(parts[0]);
+            var destBlob = container.GetBlobReference(PathResolver.GetSubpath(path));
+            var copyId = destBlob.StartCopy(new Uri(url));
+            this.RootProvider.WriteItemObject(new { CopyId = copyId }, path, false);
+        }
+
+        private void SetContainerPermission(string containerName, bool toBePublic)
+        {
+            var container = this.Client.GetContainerReference(containerName);
+            var permissions = container.GetPermissions();
+            permissions.PublicAccess = toBePublic ? BlobContainerPublicAccessType.Container : BlobContainerPublicAccessType.Off;
+            container.SetPermissions(permissions);
         }
 
         private SharedAccessBlobPolicy CreateBlobPolicy(string permissions, ref string policyName)
