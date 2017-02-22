@@ -324,6 +324,18 @@ namespace CDrive
             {
                 this.ShowEtag(path);
             }
+            else if (string.Equals(type, "ClearPages", StringComparison.InvariantCultureIgnoreCase))
+            {
+                this.ClearPages(path, newItemValue as string);
+            }
+            else if (string.Equals(type, "ReadRanges", StringComparison.InvariantCultureIgnoreCase))
+            {
+                this.ReadRanges(path, newItemValue as string);
+            }
+            else if (string.Equals(type, "UploadRanges", StringComparison.InvariantCultureIgnoreCase))
+            {
+                this.UploadRanges(path, newItemValue as string);
+            }
             else
             {
                 this.RootProvider.WriteWarning("Supported operation type: ");
@@ -342,6 +354,9 @@ namespace CDrive
                 this.RootProvider.WriteWarning("\tCopyStatus:           Show copy status of blob <-path>");
                 this.RootProvider.WriteWarning("\tCancelCopy:           Specify the destBlob in <-path> and the copy ID in <-value>.");
                 this.RootProvider.WriteWarning("\tEtag:                 Show the Etag of the blob <-path> ");
+                this.RootProvider.WriteWarning("\tClearPages:           Clear Pages <-path>. Value: [<Offset>,<Length>[;<Offset>,<length>]*] ");
+                this.RootProvider.WriteWarning("\tReadRanges:           Read Ranges <-path>. Value: <Offset>,<Length>,<LocalFolder> ");
+                this.RootProvider.WriteWarning("\tUploadRanges:         Upload Ranges <-path>. Value: <Offset>,<LocalBinFile> ");
             }
         }
 
@@ -353,6 +368,147 @@ namespace CDrive
                 var blob = this.Client.GetContainerReference(parts[0]).GetBlobReference(PathResolver.GetSubpath(path));
                 blob.FetchAttributes();
                 this.RootProvider.WriteItemObject(blob.Properties.ETag, path, false);
+            }
+            else
+            {
+                this.RootProvider.WriteWarning("Please specify the target blob.");
+            }
+        }
+
+        private void ClearPages(string path, string properties)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetPageBlobReference(PathResolver.GetSubpath(path));
+                blob.FetchAttributes();
+                if (string.IsNullOrWhiteSpace(properties))
+                {
+                    this.RootProvider.WriteWarning(string.Format("Clearing all pages"));
+                    blob.ClearPages(0, blob.Properties.Length);
+                }
+                else
+                {
+                    var ranges = properties.Split(';');
+                    foreach(var range in ranges)
+                    {
+                        var values = range.Split(',');
+                        if (values.Length != 2)
+                        {
+                            this.RootProvider.WriteWarning(string.Format("Expecting <offset>,<length> format. Got {0}. Skipping. ", range));
+                            continue;
+                        }
+
+                        var offset = Convert.ToInt64(values[0]);
+                        var length = Convert.ToInt64(values[1]);
+                        if (length + offset > blob.Properties.Length)
+                        {
+                            this.RootProvider.WriteWarning(string.Format("Beyong blob size {2} for offset {0} and length {1}. Skipping.", offset, length, blob.Properties.Length));
+                            continue;
+                        }
+
+                        this.RootProvider.WriteWarning(string.Format("Clearing pages at offset {0}, for length {1} bytes", offset, length));
+                        blob.ClearPages(offset, length);
+                    }
+                }
+            }
+            else
+            {
+                this.RootProvider.WriteWarning("Please specify the target blob.");
+            }
+        }
+
+        private void ReadRanges(string path, string properties)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetBlobReference(PathResolver.GetSubpath(path));
+                blob.FetchAttributes();
+                if (string.IsNullOrWhiteSpace(properties))
+                {
+                    this.RootProvider.WriteWarning(string.Format("Must provide <offset>,<length>,<localFolder>"));
+                }
+                else
+                {
+                    var values = properties.Split(',');
+                    if (values.Length != 3)
+                    {
+                        this.RootProvider.WriteWarning(string.Format("Expecting <offset>,<length>,<localFolder> format. Got {0}. Skipping. ", properties));
+                        return;
+                    }
+
+                    var offset = Convert.ToInt64(values[0]);
+                    var length = Convert.ToInt64(values[1]);
+                    var folder = values[2];
+                    if (length + offset > blob.Properties.Length)
+                    {
+                        this.RootProvider.WriteWarning(string.Format("Beyong blob size {2} for offset {0} and length {1}. Skipping.", offset, length, blob.Properties.Length));
+                        return;
+                    }
+
+                    var targetFile = Path.Combine(folder, string.Format("{0}-{1}.bin", offset, length));
+                    this.RootProvider.WriteWarning(string.Format("Donwloading to file {2} at offset {0}, for length {1} bytes", offset, length, targetFile));
+                    using (var s = File.OpenWrite(targetFile))
+                    {
+                        blob.DownloadRangeToStream(s, offset, length);
+                    }
+                }
+            }
+            else
+            {
+                this.RootProvider.WriteWarning("Please specify the source blob.");
+            }
+        }
+
+        private void UploadRanges(string path, string properties)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetPageBlobReference(PathResolver.GetSubpath(path));
+                blob.FetchAttributes();
+                if (string.IsNullOrWhiteSpace(properties))
+                {
+                    this.RootProvider.WriteWarning(string.Format("Must provide <offset>,<localBinFile>"));
+                }
+                else
+                {
+                    var values = properties.Split(',');
+                    if (values.Length != 2)
+                    {
+                        this.RootProvider.WriteWarning(string.Format("Expecting <offset>,<localBinFile> format. Got {0}. Skipping. ", properties));
+                        return;
+                    }
+
+                    var offset = Convert.ToInt64(values[0]);
+                    var filePath = values[1];
+                    var file = new FileInfo(filePath);
+
+                    if (!file.Exists)
+                    {
+                        this.RootProvider.WriteWarning(string.Format("File not exists: {0}", filePath));
+                        return;
+                    }
+
+                    if (file.Length % 512 > 0)
+                    {
+                        this.RootProvider.WriteWarning(string.Format("Bin File size not multiples of 512 bytes: {0}", file.Length));
+                        return;
+                    }
+
+                    if (file.Length + offset > blob.Properties.Length)
+                    {
+                        this.RootProvider.WriteWarning(string.Format("Beyong blob size {2} for offset {0} and length {1}. Skipping.", offset, file.Length, blob.Properties.Length));
+                        return;
+                    }
+                    
+                    this.RootProvider.WriteWarning(string.Format("Uploading to blob {2} at offset {0}, for length {1} bytes", offset, file.Length, path));
+                    using (var s = File.OpenRead(filePath))
+                    {
+                        blob.WritePages(s, offset);
+                    }
+                }
             }
             else
             {
