@@ -367,32 +367,29 @@ namespace CDrive
                 return;
             }
 
-            if (sourceDrive.IsItemContainer(PathResolver.GetSubpath(path)))
-            {
-                if (!recurse)
-                {
-                    throw new Exception(path + " is a container");
-                }
+            CopySingleItem(path, destination);
 
-                if (targetDrive.IsItemContainer(PathResolver.GetSubpath(destination)) && !exactDest)
-                {
-                    destination = MakePath(destination, PathResolver.SplitPath(path).Last());
-                }
+            //if (sourceDrive.IsItemContainer(PathResolver.GetSubpath(path)))
+            //{
+            //    if (targetDrive.IsItemContainer(PathResolver.GetSubpath(destination)) && !exactDest)
+            //    {
+            //        destination = MakePath(destination, PathResolver.SplitPath(path).Last());
+            //    }
   
-                targetDrive.NewItem(PathResolver.GetSubpath(destination), "Directory", null);
-                foreach (var c in sourceDrive.GetChildNamesList(PathResolver.GetSubpath(path), PathType.Item))
-                {
-                    CopySingleItem(MakePath(path, c), MakePath(destination, c), exactDest: true);
-                }
-                foreach ( var c in sourceDrive.GetChildNamesList(PathResolver.GetSubpath(path), PathType.Container))
-                {
-                    CopyItemInternal(MakePath(path, c), MakePath(destination, c), recurse, deleteOriginal, exactDest: true);
-                }
-            }
-            else
-            {
-                CopySingleItem(path, destination);
-            }
+            //    targetDrive.NewItem(PathResolver.GetSubpath(destination), "Directory", null);
+            //    foreach (var c in sourceDrive.GetChildNamesList(PathResolver.GetSubpath(path), PathType.Item))
+            //    {
+            //        CopySingleItem(MakePath(path, c), MakePath(destination, c), exactDest: true);
+            //    }
+            //    foreach ( var c in sourceDrive.GetChildNamesList(PathResolver.GetSubpath(path), PathType.Container))
+            //    {
+            //        CopyItemInternal(MakePath(path, c), MakePath(destination, c), recurse, deleteOriginal, exactDest: true);
+            //    }
+            //}
+            //else
+            //{
+            //    CopySingleItem(path, destination);
+            //}
         }
 
         protected void CopySingleItem(string path, string destination, bool exactDest = false)
