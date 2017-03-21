@@ -75,6 +75,7 @@
     <Compile Include="DriveInfo\AbstractDriveInfo.cs" />
     <Compile Include="DriveInfo\AzureBlobServiceDriveInfo2.cs" />
     <Compile Include="DriveInfo\AzureBlobServiceDriveInfo.cs" />
+    <Compile Include="DriveInfo\AzureBlob\Block.cs" />
     <Compile Include="DriveInfo\AzureQueueServiceDriveInfo.cs" />
     <Compile Include="DriveInfo\AzureTableServiceDriveInfo.cs" />
     <Compile Include="DriveInfo\AzureFileServiceDriveInfo.cs" />

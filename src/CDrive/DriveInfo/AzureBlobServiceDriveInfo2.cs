@@ -1,12 +1,15 @@
-﻿using Microsoft.WindowsAzure.Storage;
+﻿using CDrive.DriveInfo.AzureBlob;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Provider;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -336,6 +339,14 @@ namespace CDrive
             {
                 this.UploadRanges(path, newItemValue as string);
             }
+            else if (string.Equals(type, "ShowUncommittedBlocks", StringComparison.InvariantCultureIgnoreCase))
+            {
+                this.ShowUncommittedBlocks(path, newItemValue as string);
+            }
+            else if (string.Equals(type, "ShowCommittedBlocks", StringComparison.InvariantCultureIgnoreCase))
+            {
+                this.ShowCommittedBlocks(path, newItemValue as string);
+            }
             else
             {
                 this.RootProvider.WriteWarning("Supported operation type: ");
@@ -357,7 +368,64 @@ namespace CDrive
                 this.RootProvider.WriteWarning("\tClearPages:           Clear Pages <-path>. Value: [<Offset>,<Length>[;<Offset>,<length>]*] ");
                 this.RootProvider.WriteWarning("\tReadRanges:           Read Ranges <-path>. Value: <Offset>,<Length>,<LocalFolder> ");
                 this.RootProvider.WriteWarning("\tUploadRanges:         Upload Ranges <-path>. Value: <Offset>,<LocalBinFile> ");
+                this.RootProvider.WriteWarning("\tShowUncommittedBlocks:");
+                this.RootProvider.WriteWarning("\tShowCommittedBlocks:");
             }
+        }
+
+        private void ShowBlocks(string path, bool committed)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetBlobReference(PathResolver.GetSubpath(path));
+                var blocks = LoadBlocks(blob, committed);
+                foreach (var block in blocks)
+                {
+                    this.RootProvider.WriteItemObject(block, path, false);
+                }
+            }
+        }
+
+        private void ShowUncommittedBlocks(string path, string v)
+        {
+            ShowBlocks(path, false);
+        }
+
+        private void ShowCommittedBlocks(string path, string v)
+        {
+            ShowBlocks(path, true);
+        }
+
+        private List<Block> LoadBlocks(CloudBlob blob, bool committed = true)
+        {
+            var sasUri = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+            {
+                SharedAccessExpiryTime = DateTime.UtcNow.AddMinutes(5),
+                Permissions = SharedAccessBlobPermissions.Read,
+            });
+
+            var blobUri = new Uri(string.Format("{0}{1}", blob.Uri, sasUri));
+            var blockList = new List<Block>();
+            var request = BlobHttpWebRequestFactory.GetBlockList(blobUri, null, null, committed ? BlockListingFilter.Committed : BlockListingFilter.Uncommitted, null, null);
+            using (var resp = (HttpWebResponse)request.GetResponse())
+            {
+                using (var stream = resp.GetResponseStream())
+                {
+                    var getBlockListResponse = new GetBlockListResponse(stream);
+                    var blocks = getBlockListResponse.Blocks;
+                    foreach (var block in blocks)
+                    {
+                        blockList.Add(new Block()
+                        {
+                            Name = Encoding.UTF8.GetString(Convert.FromBase64String(block.Name)),
+                            Length = block.Length
+                        });
+                    }
+                }
+            }
+
+            return blockList;
         }
 
         private void ShowEtag(string path)

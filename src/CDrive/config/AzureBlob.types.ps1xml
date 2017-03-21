@@ -163,4 +163,17 @@
       </ScriptProperty>
     </Members>
   </Type>
+  <Type>
+    <Name>CDrive.DriveInfo.AzureBlob.Block</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>Name</Name>
+        <GetScriptBlock>$_.Name</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Length</Name>
+        <GetScriptBlock>$_.Length</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
 </Types>
