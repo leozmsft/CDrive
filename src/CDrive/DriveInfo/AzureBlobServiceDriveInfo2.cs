@@ -965,7 +965,6 @@ namespace CDrive
         public override IContentReader GetContentReader(string path)
         {
             var r = AzureBlobPathResolver2.ResolvePath(this.Client, path);
-            var blob = r.Container.GetBlobReference(r.BlobQuery.Prefix);
             if (r.PathType == PathType.AzureBlobQuery)
             {
                 var firstFile = this.ListFiles(r.Container, r.BlobQuery).FirstOrDefault();
@@ -1002,7 +1001,34 @@ namespace CDrive
 
         public override void GetProperty(string path, System.Collections.ObjectModel.Collection<string> providerSpecificPickList)
         {
-            
+            var r = AzureBlobPathResolver2.ResolvePath(this.Client, path);
+
+            switch(r.PathType)
+            {
+                case PathType.AzureBlobRoot:
+                    {
+
+                        break;
+                    }
+                case PathType.AzureBlobQuery:
+                    {
+                        r.BlobQuery.MaxResult = 1;
+                        foreach(var file in ListFiles(r.Container, r.BlobQuery))
+                        {
+                            var blob = new CloudBlob(file.Uri, this.Client.Credentials);
+                            blob.FetchAttributes();
+
+                            this.RootProvider.WriteItemObject(blob.Properties, path, false);
+                            this.RootProvider.WriteItemObject(blob.Metadata, path, false);
+                        }
+
+                        break;
+                    }
+                default:
+                    {
+                        break;
+                    }
+            }
         }
 
         public override void SetProperty(string path, PSObject propertyValue)
