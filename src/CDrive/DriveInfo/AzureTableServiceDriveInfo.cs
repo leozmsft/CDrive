@@ -17,21 +17,31 @@ namespace CDrive
     public class AzureTableServiceDriveInfo : AbstractDriveInfo
     {
         public CloudTableClient Client { get; set; }
+        public CloudStorageAccount Account { get; set; }
         public string Endpoint { get; set; }
 
         public AzureTableServiceDriveInfo(string url, string name)
         {
-            var parts = url.Split('?');
+            var parts = url.Split(new char[] { '?' }, count: 2);
             var endpoint = parts[0];
             var dict = ParseValues(parts[1]);
-            var accountName = dict["account"];
-            var accountKey = dict["key"];
+            StorageCredentials cred;
 
-            var cred = new StorageCredentials(accountName, accountKey);
-            var account = new CloudStorageAccount(cred, null, null, tableStorageUri: new StorageUri(new Uri(endpoint)), fileStorageUri: null);
-            var client = account.CreateCloudTableClient();
+            if (dict.ContainsKey("account"))
+            {
+                var accountName = dict["account"];
+                var accountKey = dict["key"];
 
-            this.Client = client;
+                cred = new StorageCredentials(accountName, accountKey);
+            }
+            else
+            {
+                //account sas
+                cred = new StorageCredentials('?' + parts[1]);
+            }
+
+            this.Account = new CloudStorageAccount(cred, null, null, tableStorageUri: new StorageUri(new Uri(endpoint)), fileStorageUri: null);
+            this.Client = this.Account.CreateCloudTableClient();
             this.Endpoint = endpoint;
             this.Name = name;
         }
@@ -162,6 +172,10 @@ namespace CDrive
                         UpdateEntities(path, type, newItemValue);
                     }
                     break;
+                case "accountsastoken":
+                    var sas = this.Account.GetSharedAccessSignature(AzureUtils.ParseAccountSAS(newItemValue as string));
+                    this.RootProvider.WriteItemObject(sas, path, false);
+                    break;
                 default:
                     ShowNewItemHelp();
                     break;
@@ -182,6 +196,7 @@ replaceEntity   <DynamicTableEntity>    supported types or string literals
 mergeEntity     ...
 insertOrReplaceEntity  ...
 insertOrMergeEntity    ...
+accountsastoken start=<days>;expiry=<days>;p=acdlprwu;protocol=http|https;resources=cos;services=bqtf;IP=<IP1>[-<IP2>]
 ";
             this.RootProvider.WriteItemObject(help, string.Empty, false);
         }

@@ -1,4 +1,5 @@
 ﻿using CDrive.DriveInfo.AzureBlob;
+using CDrive.Util;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -19,21 +20,31 @@ namespace CDrive
     public class AzureBlobServiceDriveInfo2 : AbstractDriveInfo
     {
         public CloudBlobClient Client { get; set; }
+        public CloudStorageAccount Account { get; set; }
         public string Endpoint { get; set; }
 
         public AzureBlobServiceDriveInfo2(string url, string name)
         {
-            var parts = url.Split('?');
+            var parts = url.Split(new char[] { '?' }, count: 2);
             var endpoint = parts[0];
             var dict = ParseValues(parts[1]);
-            var accountName = dict["account"];
-            var accountKey = dict["key"];
+            StorageCredentials cred;
 
-            var cred = new StorageCredentials(accountName, accountKey);
-            var account = new CloudStorageAccount(cred, new StorageUri(new Uri(endpoint)), null, null, null);
-            var client = account.CreateCloudBlobClient();
+            if (dict.ContainsKey("account"))
+            {
+                var accountName = dict["account"];
+                var accountKey = dict["key"];
 
-            this.Client = client;
+                cred = new StorageCredentials(accountName, accountKey);
+            }
+            else
+            {
+                //account sas
+                cred = new StorageCredentials('?' + parts[1]);
+            }
+
+            Account = new CloudStorageAccount(cred, new Uri(endpoint), null, null, null);
+            Client = Account.CreateCloudBlobClient();
             this.Endpoint = endpoint;
             this.Name = name;
         }
@@ -164,6 +175,12 @@ namespace CDrive
                         this.RootProvider.WriteItemObject(blob.StorageUri.PrimaryUri.ToString() + token, path, false);
                     }
                 }
+            }
+            else if (string.Equals(type, "AccountSAStoken", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var sas = this.Account.GetSharedAccessSignature(AzureUtils.ParseAccountSAS(newItemValue as string));
+
+                this.RootProvider.WriteItemObject(sas, path, false);
             }
             else if (string.Equals(type, "Policy", StringComparison.InvariantCultureIgnoreCase))
             {
@@ -358,6 +375,7 @@ namespace CDrive
                 this.RootProvider.WriteWarning("\tAppendBlob:           Create append blob <-path> with contents <-value>");
                 this.RootProvider.WriteWarning("\tContainerSAStoken:    Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
                 this.RootProvider.WriteWarning("\tBlobSAStoken:         Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
+                this.RootProvider.WriteWarning("\tAccountSAStoken:      Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
                 this.RootProvider.WriteWarning("\tPolicy:               Expected <-value>: start=<days>;expiry=<days>;policy=<policy>;p=rwdl");
                 this.RootProvider.WriteWarning("\tListPolicy:           List existing policy names");
                 this.RootProvider.WriteWarning("\tPermission:           Supported <-value>: PublicContainer, PrivateContainer");

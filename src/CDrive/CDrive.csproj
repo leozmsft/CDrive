@@ -96,6 +96,7 @@
     <Compile Include="PathResolver\PathResolver.cs" />
     <Compile Include="PathResolver\PathType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Util\AzureUtils.cs" />
     <Compile Include="Util\Constants.cs" />
     <Compile Include="Util\TableObject.cs" />
     <Compile Include="Util\Utils.cs" />
