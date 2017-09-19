@@ -43,7 +43,7 @@ namespace CDrive
                 cred = new StorageCredentials('?' + parts[1]);
             }
 
-            Account = new CloudStorageAccount(cred, new Uri(endpoint), null, null, null);
+            Account = new CloudStorageAccount(cred, new StorageUri(new Uri(endpoint)), null, null, null);
             Client = Account.CreateCloudBlobClient();
             this.Endpoint = endpoint;
             this.Name = name;
@@ -1068,27 +1068,45 @@ namespace CDrive
             }
         }
 
-        public override Stream CopyFrom(string path)
+        public override Tuple<PathType, Stream> CopyFrom(string path)
         {
-            var r = AzureBlobPathResolver2.ResolvePath(this.Client, path);
+            var r = AzureBlobPathResolver2.ResolvePath(this.Client, path, resolveBlobType: true);
             var files = this.ListFiles(r.Container, r.BlobQuery);
             if (files.Count() > 0)
             {
                 var blob = new CloudBlob(files.First().Uri, this.Client.Credentials);
-                return blob.OpenRead();
+                return new Tuple<PathType, Stream>(r.PathType, blob.OpenRead());
             }
 
             return null;
         }
 
-        public override Stream CopyTo(string path, string name)
+        public override Stream CopyTo(string path, string name, PathType sourcePathType)
         {
             var r = AzureBlobPathResolver2.ResolvePath(this.Client, path + PathResolver.DirSeparator + name);
             if (r.PathType == PathType.AzureBlobQuery)
             {
                 var prefix = r.BlobQuery.Prefix;
-                var blob = new CloudBlockBlob(new Uri(r.Container.Uri.ToString() + "/" + prefix), this.Client.Credentials);
-                return blob.OpenWrite();
+
+                switch(sourcePathType)
+                {
+                    case PathType.AzureBlobAppend:
+                        {
+                            var blob = new CloudAppendBlob(new Uri(r.Container.Uri.ToString() + "/" + prefix), this.Client.Credentials);
+                            return blob.OpenWrite(true);
+                        }
+                    case PathType.AzureBlobPage:
+                        {
+                            var blob = new CloudPageBlob(new Uri(r.Container.Uri.ToString() + "/" + prefix), this.Client.Credentials);
+                            return blob.OpenWrite(null);
+                        }
+                    case PathType.AzureBlobBlock:
+                    default:
+                        {
+                            var blob = new CloudBlockBlob(new Uri(r.Container.Uri.ToString() + "/" + prefix), this.Client.Credentials);
+                            return blob.OpenWrite();
+                        }
+                }
             }
 
             return null;

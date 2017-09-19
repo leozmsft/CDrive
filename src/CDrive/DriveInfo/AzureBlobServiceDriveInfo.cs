@@ -946,13 +946,13 @@ namespace CDrive
         }
 
 
-        public override Stream CopyFrom(string path)
+        public override Tuple<PathType, Stream> CopyFrom(string path)
         {
             var r = AzureBlobPathResolver.ResolvePath(this.Client, path, skipCheckExistence: false);
-            return r.Blob.OpenRead();
+            return new Tuple<PathType, Stream>(r.PathType, r.Blob.OpenRead());
         }
 
-        public override Stream CopyTo(string path, string name)
+        public override Stream CopyTo(string path, string name, PathType sourcePathType)
         {
             var r = AzureBlobPathResolver.ResolvePath(this.Client, path, skipCheckExistence: false);
             if (r.PathType == PathType.AzureBlobDirectory)

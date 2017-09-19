@@ -408,8 +408,10 @@ namespace CDrive
                 targetDir = PathResolver.GetSubpathDirectory(destination);
                 targetFile = PathResolver.SplitPath(destination).Last();
             }
-            using (var sourceStream = sourceDrive.CopyFrom(sourcePath))
-            using (var targetStream = targetDrive.CopyTo(targetDir, targetFile))
+
+            var sourceInfo = sourceDrive.CopyFrom(sourcePath);
+            using (var sourceStream = sourceInfo.Item2)
+            using (var targetStream = targetDrive.CopyTo(targetDir, targetFile, sourceInfo.Item1))
             {
                 if (sourceStream == null || targetStream == null)
                 {

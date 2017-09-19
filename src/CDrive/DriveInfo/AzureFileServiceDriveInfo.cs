@@ -623,12 +623,12 @@ namespace CDrive
             }
         }
 
-        public override Stream CopyFrom(string path)
+        public override Tuple<PathType, Stream> CopyFrom(string path)
         {
             throw new NotImplementedException();
         }
 
-        public override Stream CopyTo(string path, string name)
+        public override Stream CopyTo(string path, string name, PathType sourcePathType)
         {
             throw new NotImplementedException();
         }

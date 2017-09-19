@@ -30,9 +30,9 @@ namespace CDrive
 
         public abstract void SetProperty(string path, PSObject propertyValue);
 
-        public abstract Stream CopyFrom(string path);
+        public abstract Tuple<PathType, Stream> CopyFrom(string path);
 
-        public abstract Stream CopyTo(string dir, string name);
+        public abstract Stream CopyTo(string dir, string name, PathType sourcePathType);
 
         public abstract IList<string> GetChildNamesList(string path, PathType type);
 

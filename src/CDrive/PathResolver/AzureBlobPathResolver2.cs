@@ -10,7 +10,7 @@ namespace CDrive
 {
     public class AzureBlobPathResolver2 : PathResolver
     {
-        public static AzureBlobPathResolveResult2 ResolvePath(CloudBlobClient client, string path)
+        public static AzureBlobPathResolveResult2 ResolvePath(CloudBlobClient client, string path, bool resolveBlobType = false)
         {
             var result = new AzureBlobPathResolveResult2();
             var parts = SplitPath(path);
@@ -80,6 +80,24 @@ namespace CDrive
                 }
 
                 q.Prefix = string.Join("/", prefixList);
+
+                if (resolveBlobType)
+                {
+                    var blob = result.Container.ListBlobs(q.Prefix, true, blobListingDetails: q.BlobListingDetails).First();
+                    if (blob is CloudAppendBlob)
+                    {
+                        result.PathType = PathType.AzureBlobAppend;
+                    }
+                    else if (blob is CloudBlockBlob)
+                    {
+                        result.PathType = PathType.AzureBlobBlock;
+                    }
+                    else if (blob is CloudPageBlob)
+                    {
+                        result.PathType = PathType.AzureBlobPage;
+                    }
+                }
+                    
             }
 
             return result;

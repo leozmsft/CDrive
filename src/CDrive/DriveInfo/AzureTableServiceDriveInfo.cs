@@ -923,12 +923,12 @@ accountsastoken start=<days>;expiry=<days>;p=acdlprwu;protocol=http|https;resour
             }
         }
 
-        public override Stream CopyFrom(string path)
+        public override Tuple<PathType, Stream> CopyFrom(string path)
         {
             throw new NotImplementedException();
         }
 
-        public override Stream CopyTo(string path, string name)
+        public override Stream CopyTo(string path, string name, PathType sourcePathType)
         {
             throw new NotImplementedException();
         }

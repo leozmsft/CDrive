@@ -157,12 +157,12 @@ namespace CDrive
             return path.Substring(Endpoint.Length);
         }
 
-        public override Stream CopyFrom(string path)
+        public override Tuple<PathType, Stream> CopyFrom(string path)
         {
-            return new FileStream(convertToLocalPath(path), FileMode.Open);
+            return new Tuple<PathType, Stream>(PathType.LocalFile, new FileStream(convertToLocalPath(path), FileMode.Open));
         }
 
-        public override Stream CopyTo(string path, string name)
+        public override Stream CopyTo(string path, string name, PathType sourcePathType)
         {
             return new FileStream(Path.Combine(convertToLocalPath(path), name), FileMode.CreateNew);
         }
