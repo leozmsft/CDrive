@@ -74,7 +74,7 @@ namespace CDrive
                 if (newItemValue != null)
                 {
                     var size = 0L;
-                    if (long.TryParse(newItemValue.ToString(), out size))
+                    if (long.TryParse(newItemValue.ToString(),  out size))
                     {
                         this.CreateEmptyFile(path, size);
                     }
@@ -364,6 +364,10 @@ namespace CDrive
             {
                 this.ShowCommittedBlocks(path, newItemValue as string);
             }
+            else if (string.Equals(type, "SetStandardBlobTier", StringComparison.InvariantCultureIgnoreCase))
+            {
+                this.SetStandardBlobTier(path, newItemValue as string);
+            }
             else
             {
                 this.RootProvider.WriteWarning("Supported operation type: ");
@@ -386,8 +390,33 @@ namespace CDrive
                 this.RootProvider.WriteWarning("\tClearPages:           Clear Pages <-path>. Value: [<Offset>,<Length>[;<Offset>,<length>]*] ");
                 this.RootProvider.WriteWarning("\tReadRanges:           Read Ranges <-path>. Value: <Offset>,<Length>,<LocalFolder> ");
                 this.RootProvider.WriteWarning("\tUploadRanges:         Upload Ranges <-path>. Value: <Offset>,<LocalBinFile> ");
-                this.RootProvider.WriteWarning("\tShowUncommittedBlocks:");
-                this.RootProvider.WriteWarning("\tShowCommittedBlocks:");
+                this.RootProvider.WriteWarning("\tShowUncommittedBlocks");
+                this.RootProvider.WriteWarning("\tShowCommittedBlocks");
+                this.RootProvider.WriteWarning("\tSetStandardBlobTier:   Set Standard Blob Tier: Hot, Cool, Archive");
+            }
+        }
+
+        private void SetStandardBlobTier(string path, string v)
+        {
+            var parts = PathResolver.SplitPath(path);
+            if (parts.Count > 1)
+            {
+                var blob = this.Client.GetContainerReference(parts[0]).GetBlockBlobReference(PathResolver.GetSubpath(path));
+                if (blob == null || !blob.Exists())
+                {
+                    throw new Exception(string.Format("Block Blob {0} not existing.", path));
+                }
+
+                var tier = StandardBlobTier.Unknown;
+                if (Enum.TryParse<StandardBlobTier>(v, out tier) && tier != StandardBlobTier.Unknown)
+                {
+                    blob.SetStandardBlobTier(tier);
+                    this.RootProvider.WriteWarning("Set blob tier to " + tier);
+                }
+                else
+                {
+                    throw new Exception(string.Format("Unrecognized new blob tier: {0}", v));
+                }
             }
         }
 
